@@ -4,13 +4,13 @@ import Box from '@mui/material/Box'
 import Link from '@mui/material/Link'
 import Typography from '@mui/material/Typography'
 import { copy } from '../content'
-import type { TriageResult } from '../api/triage'
+import type { TriageTopic } from '../api/triage'
 
 interface Props {
-  result: TriageResult
+  topics: TriageTopic[]
 }
 
-export default function TriageResults({ result }: Props) {
+export default function TriageResults({ topics }: Props) {
   const firstHeadingRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function TriageResults({ result }: Props) {
 
   return (
     <div>
-      {result.topics.map((topic, index) => (
+      {topics.map((topic, index) => (
         <Box
           component="section"
           key={topic.topic}
@@ -42,15 +42,21 @@ export default function TriageResults({ result }: Props) {
             </Alert>
           )}
 
-          {topic.cards.map((card) => (
-            <Box component="article" key={card.scenario_id} sx={{ mb: 3 }}>
-              <Typography
-                variant="h3"
-                component="h3"
-                sx={{ fontSize: '1.15rem', mb: 1 }}
-              >
-                {card.scenario}
-              </Typography>
+          {topic.cards.map((card, cardIndex) => (
+            <Box
+              component="article"
+              key={card.scenario_id ?? `${topic.topic}-${cardIndex}`}
+              sx={{ mb: 3 }}
+            >
+              {card.scenario && (
+                <Typography
+                  variant="h3"
+                  component="h3"
+                  sx={{ fontSize: '1.15rem', mb: 1 }}
+                >
+                  {card.scenario}
+                </Typography>
+              )}
 
               <Typography component="p" sx={{ fontWeight: 700 }}>
                 {copy.card.whyHeading}

@@ -15,6 +15,7 @@ const MAX_SELECTED = 2
 interface Props {
   scenarios: Scenario[]
   onSubmit: (ids: string[]) => void
+  onChooseFreeText: () => void
   loading: boolean
   errorMessage: string | null
 }
@@ -22,10 +23,12 @@ interface Props {
 export default function ScenarioPicker({
   scenarios,
   onSubmit,
+  onChooseFreeText,
   loading,
   errorMessage,
 }: Props) {
   const [selected, setSelected] = useState<string[]>([])
+  const [notSure, setNotSure] = useState(false)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const errorRef = useRef<HTMLDivElement>(null)
 
@@ -37,15 +40,25 @@ export default function ScenarioPicker({
     if (errorMessage) errorRef.current?.focus()
   }, [errorMessage])
 
-  function toggle(id: string) {
+  function toggleScenario(id: string) {
+    setNotSure(false)
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     )
   }
 
+  function toggleNotSure() {
+    setNotSure((prev) => {
+      const next = !prev
+      if (next) setSelected([])
+      return next
+    })
+  }
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    onSubmit(selected)
+    if (notSure) onChooseFreeText()
+    else onSubmit(selected)
   }
 
   const atMax = selected.length >= MAX_SELECTED
@@ -85,14 +98,24 @@ export default function ScenarioPicker({
                 control={
                   <Checkbox
                     checked={checked}
-                    onChange={() => toggle(scenario.id)}
-                    disabled={loading || (!checked && atMax)}
+                    onChange={() => toggleScenario(scenario.id)}
+                    disabled={loading || notSure || (!checked && atMax)}
                   />
                 }
                 label={scenario.label}
               />
             )
           })}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={notSure}
+                onChange={toggleNotSure}
+                disabled={loading}
+              />
+            }
+            label={copy.picker.notSure}
+          />
         </FormGroup>
       </FormControl>
 

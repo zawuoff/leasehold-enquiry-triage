@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { getScenarios, postGuidedTriage, TriageValidationError } from './triage'
+import {
+  getScenarios,
+  postGuidedTriage,
+  postFreeTextTriage,
+  TriageValidationError,
+} from './triage'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -56,5 +61,45 @@ describe('postGuidedTriage', () => {
   it('throws a generic error on a 500', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }))
     await expect(postGuidedTriage(['lease-extension'])).rejects.toThrow(/500/)
+  })
+})
+
+describe('postFreeTextTriage', () => {
+  it('posts the free-text payload and returns the matched result', async () => {
+    const result = { outcome: 'matched', topics: [] }
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => result,
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await postFreeTextTriage('my service charge')).toEqual(result)
+    const [, options] = fetchMock.mock.calls[0]
+    expect(JSON.parse(options.body)).toEqual({
+      mode: 'free_text',
+      free_text: 'my service charge',
+    })
+  })
+
+  it('returns a fallback outcome unchanged', async () => {
+    const result = { outcome: 'fallback', fallback: { heading: 'x' } }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => result }),
+    )
+    expect((await postFreeTextTriage('nonsense')).outcome).toBe('fallback')
+  })
+
+  it('throws TriageValidationError on a 400', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'blank_text', field: 'free_text' } }),
+      }),
+    )
+    await expect(postFreeTextTriage('')).rejects.toBeInstanceOf(TriageValidationError)
   })
 })
