@@ -5,17 +5,16 @@ import AdviserCallback from '../AdviserCallback'
 import { copy } from '../../content'
 
 interface Props {
-  topicLabel?: string
   onBack: () => void
   onContinue: () => void
 }
 
-export default function NextStepsStep({ topicLabel, onBack, onContinue }: Props) {
+export default function NextStepsStep({ onBack, onContinue }: Props) {
   return (
     <StepCard title={copy.stepHeadings.nextSteps} onBack={onBack} onContinue={onContinue}>
       <Link href={copy.results.contactUrl}>{copy.results.contact} →</Link>
       <Divider sx={{ my: 3 }} />
-      <AdviserCallback topic={topicLabel} />
+      <AdviserCallback />
     </StepCard>
   )
 }

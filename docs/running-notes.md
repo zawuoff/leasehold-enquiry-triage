@@ -2371,3 +2371,20 @@ examples (axe test on the free-text screen passes).
   (default off) and `DJANGO_ALLOWED_HOSTS` (default `localhost,127.0.0.1`, needed
   once DEBUG is off). README updated (run with `DJANGO_DEBUG=true` for verbose
   local errors; SECRET_KEY is a dev placeholder). Backend: 49 tests pass.
+
+## 2026-08-31 — Honest callback stub (fix-callback-stub-wording branch)
+
+The callback previously POSTed name/email to `/api/callback` (validated then
+discarded) — so "not sent" wasn't strictly true, and name/email were effectively
+required by the backend. Reworked `AdviserCallback` into a genuine **client-side
+stub**: both fields optional, the email format is checked only if one is given,
+and **nothing is sent or stored** (no network call). Wording made honest — form:
+"This is a prototype: your details are validated but not sent or stored, so no
+adviser will contact you."; success: "…your details were not sent or stored and
+no adviser will contact you." Labels show "(optional)".
+
+Ripple: removed the now-dead `topic` prop threading (`AdviserCallback` →
+`NextStepsStep` → `App`) and updated the callback tests (client-side validation;
+empty submission accepted). The `/api/callback` endpoint and `postCallback`
+client remain as a wiring point for a future real callback, but the current UI no
+longer calls them. Frontend: 29 tests pass, build clean.

@@ -190,33 +190,39 @@ describe('journey', () => {
   })
 })
 
-describe('adviser callback', () => {
-  it('submits and shows acknowledgement', async () => {
+describe('adviser callback (prototype stub)', () => {
+  async function gotoCallback(user: ReturnType<typeof userEvent.setup>) {
+    await gotoResult(user)
+    await user.click(continueBtn()) // result -> next steps
+    await screen.findByRole('heading', { name: /ask an adviser to contact you/i })
+  }
+
+  it('acknowledges a filled-in submission', async () => {
     installFetch(() => jsonResponse(MATCHED))
     const user = userEvent.setup()
     renderApp()
-    await gotoResult(user)
-    await user.click(continueBtn())
-    await user.type(screen.getByLabelText('Your name'), 'Sam')
-    await user.type(screen.getByLabelText('Your email address'), 'sam@example.com')
+    await gotoCallback(user)
+    await user.type(screen.getByLabelText(/your name/i), 'Sam')
+    await user.type(screen.getByLabelText(/your email/i), 'sam@example.com')
     await user.click(screen.getByRole('button', { name: /request a callback/i }))
-    expect(await screen.findByText(/an adviser can follow up/i)).toBeInTheDocument()
+    expect(await screen.findByText(/were not sent or stored/i)).toBeInTheDocument()
   })
 
-  it('shows a message when the email is invalid', async () => {
-    installFetch(() => jsonResponse(MATCHED), {
-      callback: () =>
-        jsonResponse(
-          { error: { code: 'email_invalid', field: 'email' } },
-          { ok: false, status: 400 },
-        ),
-    })
+  it('accepts an empty submission (both fields optional)', async () => {
+    installFetch(() => jsonResponse(MATCHED))
     const user = userEvent.setup()
     renderApp()
-    await gotoResult(user)
-    await user.click(continueBtn())
-    await user.type(screen.getByLabelText('Your name'), 'Sam')
-    await user.type(screen.getByLabelText('Your email address'), 'nope')
+    await gotoCallback(user)
+    await user.click(screen.getByRole('button', { name: /request a callback/i }))
+    expect(await screen.findByText(/were not sent or stored/i)).toBeInTheDocument()
+  })
+
+  it('validates the email format when one is given', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    renderApp()
+    await gotoCallback(user)
+    await user.type(screen.getByLabelText(/your email/i), 'nope')
     await user.click(screen.getByRole('button', { name: /request a callback/i }))
     expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument()
   })

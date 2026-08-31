@@ -123,7 +123,6 @@ function App() {
     () => (scenarios ?? []).filter((s) => s.topic === selectedTopic),
     [scenarios, selectedTopic],
   )
-  const topicLabel = useMemo(() => result?.topics?.[0]?.label, [result])
   // After a result, Back returns to the originating input step.
   const resultBackPhase: Phase = mode === 'free' ? 'describe' : 'situation'
 
@@ -149,7 +148,6 @@ function App() {
   } else if (phase === 'nextsteps') {
     content = (
       <NextStepsStep
-        topicLabel={topicLabel}
         onBack={() => setPhase('result')}
         onContinue={() => setPhase('feedback')}
       />
