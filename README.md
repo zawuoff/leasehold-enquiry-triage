@@ -6,7 +6,7 @@ in their own words — and gets a plain-English next step: relevant topics, a
 cautious explanation, and a link to verified LEASE guidance. It signposts; it
 does **not** give legal advice.
 
-**Author:** Fouwaz Parkar · **Date:** 2026-08-31
+**Author:** Fouwaz Parkar · **Date:** 2026-09-01 (submission date)
 
 ## What it does
 
