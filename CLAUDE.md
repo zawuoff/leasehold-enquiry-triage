@@ -37,6 +37,15 @@ routes. Signposting, **not** legal advice.
 - This is the standing decision and supersedes any earlier discussion of
   `govuk-frontend` or other GOV.UK component libraries.
 
+## Git & pull requests
+
+- **Do not commit, and do not create PRs, on the user's behalf.** The user runs
+  all `git commit` and PR creation themselves.
+- When work is ready, provide a **ready-to-paste PR description** (and suggested
+  commit messages if useful) instead of running `git commit` or `gh pr create`.
+- Staging/branching is fine to prepare, but stop before committing or opening PRs.
+
+
 ## Accessibility
 
 - **Standing target: WCAG 2.2 AA.** Keep it in mind from scaffold onward, not as
