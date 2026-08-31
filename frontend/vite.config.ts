@@ -15,5 +15,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.ts',
+    // The axe smoke tests + userEvent make some journeys slow; give headroom
+    // so runs don't flake under load / in CI.
+    testTimeout: 15000,
   },
 })

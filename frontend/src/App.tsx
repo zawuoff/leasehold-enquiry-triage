@@ -138,7 +138,7 @@ function App() {
         continueLabel={copy.nav.startAgain}
       >
         <Typography sx={{ color: 'text.secondary' }}>
-          You can start a new enquiry at any time.
+          {copy.stepHeadings.doneBody}
         </Typography>
       </StepCard>
     )

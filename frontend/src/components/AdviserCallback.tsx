@@ -54,8 +54,11 @@ export default function AdviserCallback({ topic }: Props) {
         </Alert>
       ) : (
         <form onSubmit={handleSubmit} noValidate>
-          <Typography component="p" sx={{ mb: 2 }}>
+          <Typography component="p" sx={{ mb: 1 }}>
             {copy.callback.intro}
+          </Typography>
+          <Typography component="p" sx={{ mb: 2, color: 'text.secondary', fontSize: 14 }}>
+            {copy.callback.why}
           </Typography>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
