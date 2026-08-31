@@ -1,0 +1,2 @@
+# Runtime dependencies. Django 6.1 supports Python 3.14.
+Django==6.1
