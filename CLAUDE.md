@@ -18,6 +18,23 @@ routes. Signposting, **not** legal advice.
 - **Scope:** leasehold only (park homes out of scope). Three topics: costs &
   charges, repairs & building management, lease extension.
 
+## Documentation
+
+- **`docs/running-notes.md`**: chronological working log. Record explorations,
+  alternatives, critiques, trade-offs, assumptions, rejected approaches and
+  confirmed decisions. Update it after meaningful discussions, including ideas
+  that are not selected.
+- **`docs/plan.md`**: concise planning pack containing confirmed decisions only.
+  Keep it focused on the problem, useful V1 outcome, assumptions, technical
+  boundaries, ordered implementation tickets and key risks. Do not include
+  detailed history, exact copy, rejected alternatives or resolved questions.
+  Update it only when a decision is confirmed.
+- **`docs/content.md`**: source of truth for approved user-facing wording,
+  warnings, validation/error messages, action behaviour, official URLs and
+  verification dates. Do not add proposed or invented copy. Discuss drafts in
+  `running-notes.md` first and move them into `content.md` only after
+  confirmation.
+
 ## Frontend library
 
 - Use **[MUI](https://mui.com/)** (`@mui/material` + `@mui/system`) for the
