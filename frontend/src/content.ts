@@ -71,15 +71,14 @@ export const copy = {
   // DRAFT: callback/feedback copy is not yet in content.md. See running-notes.
   callback: {
     heading: 'Ask an adviser to contact you',
-    intro:
-      'Optional. If you would like a LEASE adviser to get in touch, add your details.',
-    why:
-      "We only use your name and email to reply to this enquiry — nothing else. In this prototype, they're not saved.",
-    nameLabel: 'Your name',
-    emailLabel: 'Your email address',
+    intro: 'Optional — add your details below.',
+    stub:
+      'This is a prototype: your details are validated but not sent or stored, so no adviser will contact you.',
+    nameLabel: 'Your name (optional)',
+    emailLabel: 'Your email address (optional)',
     submit: 'Request a callback',
     success:
-      'Thanks — an adviser can follow up. (Prototype: your details were not saved.)',
+      'Thanks. This is a prototype, so your details were not sent or stored and no adviser will contact you.',
   },
   feedback: {
     question: 'Was this helpful?',

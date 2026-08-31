@@ -5,50 +5,34 @@ import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { copy } from '../content'
-import { postCallback, TriageValidationError } from '../api/triage'
 
-interface Props {
-  topic?: string
-}
+// Prototype stub: both fields are optional, an email is format-checked only if
+// one is given, and nothing is sent anywhere or stored.
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
-type Status = 'idle' | 'sending' | 'done' | 'error'
-
-export default function AdviserCallback({ topic }: Props) {
+export default function AdviserCallback() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [status, setStatus] = useState<Status>('idle')
+  const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    setStatus('sending')
-    setError(null)
-    try {
-      await postCallback({ name, email, topic })
-      setStatus('done')
-    } catch (err) {
-      if (err instanceof TriageValidationError) {
-        setError(copy.validation[err.code] ?? copy.validation.invalid_request)
-        setStatus('idle')
-      } else {
-        setError('Sorry, that could not be sent. Please try again.')
-        setStatus('idle')
-      }
+    if (email.trim() && !EMAIL_RE.test(email.trim())) {
+      setError(copy.validation.email_invalid)
+      return
     }
+    setError(null)
+    setDone(true)
   }
 
   return (
     <Box component="section" aria-labelledby="callback-heading" sx={{ mt: 4 }}>
-      <Typography
-        id="callback-heading"
-        variant="h3"
-        component="h3"
-        sx={{ mb: 1 }}
-      >
+      <Typography id="callback-heading" variant="h3" component="h3" sx={{ mb: 1 }}>
         {copy.callback.heading}
       </Typography>
 
-      {status === 'done' ? (
+      {done ? (
         <Alert severity="success" role="status">
           {copy.callback.success}
         </Alert>
@@ -58,7 +42,7 @@ export default function AdviserCallback({ topic }: Props) {
             {copy.callback.intro}
           </Typography>
           <Typography component="p" sx={{ mb: 2, color: 'text.secondary', fontSize: 14 }}>
-            {copy.callback.why}
+            {copy.callback.stub}
           </Typography>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>
@@ -72,7 +56,6 @@ export default function AdviserCallback({ topic }: Props) {
             fullWidth
             sx={{ mb: 2 }}
             slotProps={{ htmlInput: { maxLength: 100 } }}
-            disabled={status === 'sending'}
           />
           <TextField
             label={copy.callback.emailLabel}
@@ -81,10 +64,9 @@ export default function AdviserCallback({ topic }: Props) {
             onChange={(event) => setEmail(event.target.value)}
             fullWidth
             sx={{ mb: 2 }}
-            disabled={status === 'sending'}
           />
-          <Button type="submit" variant="outlined" disabled={status === 'sending'}>
-            {status === 'sending' ? 'Sending…' : copy.callback.submit}
+          <Button type="submit" variant="outlined">
+            {copy.callback.submit}
           </Button>
         </form>
       )}

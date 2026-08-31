@@ -233,8 +233,9 @@ Network failures, malformed responses and HTTP 500 responses use this same visib
 
 ## Adviser callback (draft — pending promotion)
 
-- **Purpose note (accepted):** “We only use your name and email to reply to this enquiry — nothing else. In this prototype, they’re not saved.” Shown under the callback intro on the next-steps step, so the user knows why name/email are asked for.
-- Name + email are optional, validated, acknowledged, then **discarded** — not stored (matches the V1 no-persistence boundary).
+- **Honest prototype-stub note (accepted):** “This is a prototype: your details are validated but not sent or stored, so no adviser will contact you.” Shown on the next-steps callback form so it can’t be mistaken for a real callback request.
+- **Success copy (accepted):** “Thanks. This is a prototype, so your details were not sent or stored and no adviser will contact you.”
+- **Both name and email are optional.** The email format is checked only if one is given; nothing is sent anywhere (no network call) or stored. Labels show “(optional)”.
 
 ## Content limitations
 
