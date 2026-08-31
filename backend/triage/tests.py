@@ -154,6 +154,11 @@ class TriageEndpointTests(SimpleTestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"]["code"], "invalid_request")
 
+    def test_non_utf8_body_returns_400_not_500(self):
+        response = self._post(None, raw=b"\xff\xfe\xff")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "invalid_request")
+
     def test_get_is_method_not_allowed(self):
         response = self.client.get('/api/triage')
         self.assertEqual(response.status_code, 405)
@@ -279,6 +284,13 @@ class ValidateCallbackTests(SimpleTestCase):
             domain.validate_callback({"name": "Sam", "email": "not-an-email"})
         self.assertEqual(ctx.exception.code, "email_invalid")
 
+    def test_rejects_over_long_topic(self):
+        with self.assertRaises(domain.TriageError) as ctx:
+            domain.validate_callback(
+                {"name": "Sam", "email": "sam@example.com", "topic": "x" * 101}
+            )
+        self.assertEqual(ctx.exception.code, "invalid_request")
+
 
 class ValidateFeedbackTests(SimpleTestCase):
     def test_accepts_bool_and_optional_comment(self):
@@ -315,6 +327,16 @@ class CallbackEndpointTests(SimpleTestCase):
         response = self._post({"name": "Sam", "email": "nope"})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["error"]["code"], "email_invalid")
+
+    def test_malformed_json_returns_400(self):
+        response = self._post(None, raw="not json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "invalid_request")
+
+    def test_non_utf8_body_returns_400(self):
+        response = self._post(None, raw=b"\xff\xfe\xff")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "invalid_request")
 
     def test_get_is_405(self):
         self.assertEqual(self.client.get('/api/callback').status_code, 405)

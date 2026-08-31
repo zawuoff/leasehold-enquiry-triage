@@ -2356,3 +2356,18 @@ examples (axe test on the free-text screen passes).
   email to reply to this enquiry — nothing else. In this prototype, they're not
   saved." — shown under the intro on the next-steps callback form (explains why
   we ask for name/email). DRAFT, with the rest of the callback copy.
+
+### Backend hardening (backend/triage/)
+
+- **Malformed / non-JSON bodies**: found that non-UTF-8 bodies raised
+  `UnicodeDecodeError` (uncaught → 500). Factored a shared `_parse_json` helper in
+  `views.py` that catches `(JSONDecodeError, UnicodeDecodeError)` and returns the
+  standard `400 {"error":{code,field}}`. Tests added: non-UTF-8 body → 400 on
+  `/api/triage`, and malformed + non-UTF-8 → 400 on `/api/callback`.
+- **Topic length guard**: `validate_callback` now bounds `topic`
+  (`MAX_TOPIC_LENGTH = 100`) like `name`/`comment`; over-long → `invalid_request`.
+  Test added.
+- **DEBUG env-driven, default False**: `settings.py` reads `DJANGO_DEBUG`
+  (default off) and `DJANGO_ALLOWED_HOSTS` (default `localhost,127.0.0.1`, needed
+  once DEBUG is off). README updated (run with `DJANGO_DEBUG=true` for verbose
+  local errors; SECRET_KEY is a dev placeholder). Backend: 49 tests pass.
