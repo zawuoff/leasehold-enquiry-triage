@@ -32,14 +32,18 @@ The suggested-topic heading uses: **“This may relate to [user-facing topic lab
 ## Free-text entry
 
 - **Heading:** “Before you describe your situation”
-- **Privacy notice:** “Do not include names, addresses, contact details, reference numbers or information about other people. When you continue, your description is sent to this prototype to suggest relevant guidance. It is not added to an account or enquiry history.”
-- **Field label:** “Describe your situation”
+- **Privacy notice (accepted — shortened, less text-heavy; shown as a left-border inset):**
+  - “Do not include personal details — such as names, addresses or reference numbers.”
+  - “Your description isn’t saved to an account or enquiry history.”
+  - *Replaced* the earlier longer paragraph. Still avoids over-claiming (no “never saved anywhere”).
+- **Field label:** “Describe your situation” (standalone bold label above the box).
+- **Placeholder (accepted):** “Start typing here…” — a neutral prompt only; it carries no essential guidance (hint + examples sit below, always visible).
 - **Hint:** “Briefly describe the main issue in your own words. You do not need to use legal terms. Maximum 1,000 characters.”
-- **Examples (accepted):** shown **below** the field (not as placeholder), labelled “For example:”, one per topic:
+- **Examples (accepted):** shown **below** the field, labelled “For example”, one per topic:
   - “My service charge has gone up a lot this year and I don’t understand why.” — costs & charges
   - “The lift in my block has been broken for weeks and the managing agent isn’t fixing it.” — repairs & building management
   - “My lease has about 80 years left and I want to know how to extend it.” — lease extension
-- **Rejected:** placeholder text inside the box — it disappears on typing and has low contrast (WCAG). Examples sit below the field, associated to it via `aria-describedby`.
+- **Rejected:** using a placeholder to carry the *guidance/examples* — placeholders disappear on typing and have low contrast (WCAG). The examples stay below the field, associated to it via `aria-describedby`.
 
 This wording deliberately does not claim that the text is never saved anywhere. That claim would require the final proxy, server and diagnostic-logging setup to be implemented and audited.
 

@@ -22,6 +22,8 @@ export const copy = {
     heading: 'Describe your problem', // DRAFT
     subtitle:
       "Choose the area closest to your problem, or describe it in your own words. We'll point you to the right guidance and a way to reach us.", // DRAFT
+    subtitleFree:
+      "Tell us what's happening in your own words. We'll point you to the right guidance and a way to reach us.", // DRAFT
     toggleGuided: 'Pick a topic', // DRAFT
     toggleFree: 'Describe in your own words', // DRAFT
     topicLabel: 'What is your enquiry about?', // DRAFT
@@ -50,15 +52,19 @@ export const copy = {
   },
   freeText: {
     heading: 'Before you describe your situation',
-    privacy:
-      'Do not include names, addresses, contact details, reference numbers or information about other people. When you continue, your description is sent to this prototype to suggest relevant guidance. It is not added to an account or enquiry history.',
+    // Shortened, two-line privacy notice (inset) — less text-heavy. DRAFT.
+    privacyPrimary:
+      'Do not include personal details — such as names, addresses or reference numbers.',
+    privacySecondary:
+      "Your description isn't saved to an account or enquiry history.",
     label: 'Describe your situation',
+    placeholder: 'Start typing here…',
     hint: 'Briefly describe the main issue in your own words. You do not need to use legal terms. Maximum 1,000 characters.',
     maxLength: 1000,
     submit: 'Show relevant guidance',
     back: 'Back',
     // One example per topic so the guidance is relevant whatever the enquiry. DRAFT.
-    examplesLabel: 'For example:',
+    examplesLabel: 'For example',
     examples: [
       'My service charge has gone up a lot this year and I don’t understand why.',
       'The lift in my block has been broken for weeks and the managing agent isn’t fixing it.',

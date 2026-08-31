@@ -60,7 +60,7 @@ export default function DescribeStep({
   return (
     <StepCard
       title={copy.describe.heading}
-      subtitle={copy.describe.subtitle}
+      subtitle={mode === 'free' ? copy.describe.subtitleFree : copy.describe.subtitle}
       onContinue={handleContinue}
       continueDisabled={continueDisabled}
       busy={loading}
@@ -146,26 +146,43 @@ export default function DescribeStep({
         </Box>
       ) : (
         <Box sx={{ mt: 3.5 }}>
-          <Typography sx={{ mb: 2, color: 'text.secondary' }}>
-            {copy.freeText.privacy}
-          </Typography>
-          <TextField
-            id="freetext"
-            label={copy.freeText.label}
-            helperText={copy.freeText.hint}
-            multiline
-            minRows={4}
-            fullWidth
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            slotProps={{
-              htmlInput: {
-                maxLength: copy.freeText.maxLength,
-                'aria-describedby': 'freetext-helper-text freetext-examples',
-              },
-            }}
-            disabled={loading}
-          />
+          {/* Shortened privacy notice as a left-border inset */}
+          <Box sx={{ borderLeft: `4px solid ${tokens.muted}`, pl: '18px', py: '4px' }}>
+            <Typography sx={{ color: tokens.slate, fontSize: 15, lineHeight: '23px' }}>
+              {copy.freeText.privacyPrimary}
+            </Typography>
+            <Typography sx={{ color: tokens.muted, fontSize: 14, lineHeight: '21px', mt: '4px' }}>
+              {copy.freeText.privacySecondary}
+            </Typography>
+          </Box>
+
+          <Box sx={{ mt: 3 }}>
+            <Typography
+              component="label"
+              htmlFor="freetext"
+              sx={{ display: 'block', fontWeight: 700, color: tokens.navy, fontSize: 16, mb: 1.25 }}
+            >
+              {copy.freeText.label}
+            </Typography>
+            <TextField
+              id="freetext"
+              placeholder={copy.freeText.placeholder}
+              helperText={copy.freeText.hint}
+              multiline
+              minRows={4}
+              fullWidth
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+              slotProps={{
+                htmlInput: {
+                  maxLength: copy.freeText.maxLength,
+                  'aria-describedby': 'freetext-helper-text freetext-examples',
+                },
+              }}
+              disabled={loading}
+            />
+          </Box>
+
           <Box id="freetext-examples" sx={{ mt: 2 }}>
             <Typography sx={{ fontWeight: 600, color: tokens.navy, mb: 0.5 }}>
               {copy.freeText.examplesLabel}
