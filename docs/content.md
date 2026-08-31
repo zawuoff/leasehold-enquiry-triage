@@ -35,6 +35,11 @@ The suggested-topic heading uses: **“This may relate to [user-facing topic lab
 - **Privacy notice:** “Do not include names, addresses, contact details, reference numbers or information about other people. When you continue, your description is sent to this prototype to suggest relevant guidance. It is not added to an account or enquiry history.”
 - **Field label:** “Describe your situation”
 - **Hint:** “Briefly describe the main issue in your own words. You do not need to use legal terms. Maximum 1,000 characters.”
+- **Examples (accepted):** shown **below** the field (not as placeholder), labelled “For example:”, one per topic:
+  - “My service charge has gone up a lot this year and I don’t understand why.” — costs & charges
+  - “The lift in my block has been broken for weeks and the managing agent isn’t fixing it.” — repairs & building management
+  - “My lease has about 80 years left and I want to know how to extend it.” — lease extension
+- **Rejected:** placeholder text inside the box — it disappears on typing and has low contrast (WCAG). Examples sit below the field, associated to it via `aria-describedby`.
 
 This wording deliberately does not claim that the text is never saved anywhere. That claim would require the final proxy, server and diagnostic-logging setup to be implemented and audited.
 

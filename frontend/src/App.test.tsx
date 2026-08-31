@@ -90,7 +90,7 @@ async function gotoResult(user: ReturnType<typeof userEvent.setup>) {
   await chooseTopic(user, /costs and charges/i)
   await user.click(await screen.findByRole('checkbox', { name: /my service charge bill/i }))
   await user.click(continueBtn())
-  await screen.findByRole('heading', { name: /your result/i })
+  await screen.findByRole('heading', { name: /what we found/i })
 }
 
 afterEach(() => vi.unstubAllGlobals())
@@ -216,6 +216,15 @@ describe('accessibility', () => {
     const user = userEvent.setup()
     const { container } = renderApp()
     await gotoResult(user)
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('has no axe violations on the free-text screen (incl. example association)', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    const { container } = renderApp()
+    await screen.findByRole('radio', { name: /costs and charges/i })
+    await user.click(screen.getByRole('button', { name: /describe in your own words/i }))
     expect(await axe(container)).toHaveNoViolations()
   })
 })
