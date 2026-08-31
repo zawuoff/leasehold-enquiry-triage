@@ -20,11 +20,11 @@ routes. Signposting, **not** legal advice.
 
 ## Documentation
 
-- **`docs/running-notes.md`**: chronological working log. Record explorations,
+- **`docs/records/running-notes.md`**: chronological working log. Record explorations,
   alternatives, critiques, trade-offs, assumptions, rejected approaches and
   confirmed decisions. Update it after meaningful discussions, including ideas
   that are not selected.
-- **`docs/content.md`**: source of truth for approved user-facing wording,
+- **`docs/records/content.md`**: source of truth for approved user-facing wording,
   warnings, validation/error messages, action behaviour, official URLs and
   verification dates. Do not add proposed or invented copy. Discuss drafts in
   `running-notes.md` first and move them into `content.md` only after

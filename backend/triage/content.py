@@ -1,4 +1,4 @@
-"""Machine-readable mirror of docs/content.md — keep the two in sync.
+"""Machine-readable mirror of docs/records/content.md — keep the two in sync.
 
 content.md is the human source of truth for approved copy, LEASE URLs and
 verification dates. This module transcribes it verbatim for the domain logic;

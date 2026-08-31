@@ -1,6 +1,6 @@
 """Pure-Python triage domain — no Django imports, so it is unit-testable alone.
 
-Validation error codes match docs/content.md (the frontend maps them to the
+Validation error codes match docs/records/content.md (the frontend maps them to the
 approved user-facing messages).
 """
 
