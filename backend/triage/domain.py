@@ -94,8 +94,11 @@ MAX_FREE_TEXT_LENGTH = 1000
 
 # Explicit phrase/synonym rules per topic (lowercase, substring match).
 # ponytail: naive substring matching — no stemming, spell-check or negation
-# handling. Misspellings and negated phrases fall through to the safe fallback
-# rather than mis-signposting. Upgrade to a proper matcher if coverage matters.
+# handling. A description whose words contain no keyword (e.g. a misspelling)
+# falls through to the safe fallback. Negation is NOT detected: a negated
+# sentence that still contains a keyword ("no problem with my service charge")
+# matches the topic anyway — see test_negation_still_matches_keyword. Upgrade to
+# a proper matcher if coverage matters.
 KEYWORDS = {
     "COSTS_AND_CHARGES": [
         "service charge", "ground rent", "major works", "sinking fund",
