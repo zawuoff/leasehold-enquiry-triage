@@ -1,6 +1,6 @@
 // Static UI chrome. Result-card copy, scenario labels and warnings come from the
-// API (backend content.py / docs/content.md), not from here. Strings still marked
-// DRAFT are pending promotion into docs/content.md.
+// API (backend content.py / docs/records/content.md), not from here. Strings still marked
+// DRAFT are pending promotion into docs/records/content.md.
 
 // Shared literals (referenced in more than one place below).
 export const MAX_TEXT_LENGTH = 1000

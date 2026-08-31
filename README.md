@@ -24,9 +24,9 @@ does **not** give legal advice.
 - **Frontend** — React 19 + TypeScript (Vite), **MUI** as the only UI library.
   Local step-state machine (no router); enquiry data stays in memory and out of
   the URL. `frontend/src/` — `App.tsx` (flow), `components/`, `api/triage.ts`,
-  `content.ts` (UI copy mirrored from `docs/content.md`).
+  `content.ts` (UI copy mirrored from `docs/records/content.md`).
 - **Backend** — plain Django 6.1 JSON API, **stateless (no database)**.
-  `backend/triage/` — `content.py` (mirrors `docs/content.md`), `domain.py`
+  `backend/triage/` — `content.py` (mirrors `docs/records/content.md`), `domain.py`
   (pure validation + classification), `views.py`, `urls.py`.
 - **Dev** — Vite proxies `/api` to Django, so the browser makes same-origin
   requests (no CORS).
@@ -72,8 +72,10 @@ npm --prefix frontend run build                          # type-check + bundle
 
 Targets **WCAG 2.2 AA**: semantic landmarks + a single `<h1>` per screen,
 labelled controls, error summaries with focus management, keyboard operability,
-and an automated `vitest-axe` check on each screen. Automated axe cannot check
-colour contrast under jsdom — that remains a manual/next-step check.
+and an automated `vitest-axe` check on each screen. axe cannot check colour
+contrast under jsdom, so contrast is asserted directly in a unit test
+(`theme.contrast.test.ts`) — added after a manual check found and fixed a real
+WCAG AA contrast failure that axe had missed.
 
 ## Personal data & security
 
@@ -95,16 +97,18 @@ Per the brief, this is a first slice, not a finished product. Not included:
 
 - **Park homes** — out of scope (leasehold only); a natural future extension.
 - **Persistence, accounts, auth, deployment** — none; the API is stateless.
-- **A real NLP classifier** — free-text uses naive keyword matching, so
-  misspellings and negated phrases fall to the safe fallback by design.
+- **A real NLP classifier** — free-text uses naive keyword matching: input with
+  no keyword (e.g. a misspelling) falls to the safe fallback, and **negation is
+  not detected** — a negated sentence containing a keyword still matches its topic.
 - **Real LEASE phone/email** — results link to the verified "Get in touch" page
   rather than inventing contact details.
-- **Part 3 reflective notes** (personal-data / accessibility / self-review write-up)
-  and a full GOV.UK Design System implementation.
+- A **full GOV.UK Design System** implementation — MUI approximates the look and
+  feel; the design system itself is out of scope.
 
 ## Docs
 
 - `docs/plan1.md` — the V1 planning pack.
-- `docs/content.md` — approved user-facing copy, warnings, LEASE URLs, dates.
-- `docs/running-notes.md` — chronological decisions and draft copy awaiting
+- `docs/hardening-notes.md`, `docs/self-review-notes.md`, `docs/ai-usage-note.md` — Part 3 write-ups.
+- `docs/records/content.md` — approved user-facing copy, warnings, LEASE URLs, dates.
+- `docs/records/running-notes.md` — chronological decisions and draft copy awaiting
   promotion into `content.md`.

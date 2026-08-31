@@ -302,6 +302,6 @@ run, improvements, next steps), and a candid self code-review.
 
 ## 9. Supporting records
 
-- `docs/content.md` — approved copy, warnings, LEASE URLs, and verification dates
+- `docs/records/content.md` — approved copy, warnings, LEASE URLs, and verification dates
   (to be drafted/verified during build).
-- `docs/running-notes.md` — chronological exploration, decisions, and alternatives.
+- `docs/records/running-notes.md` — chronological exploration, decisions, and alternatives.

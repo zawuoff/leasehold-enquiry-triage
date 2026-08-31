@@ -1,6 +1,6 @@
 # Leasehold enquiry triage — V1 content
 
-This file is the maintained source for exact user-facing scenario, result, fallback, validation, error and recovery copy; official links; shared warnings; and source-verification dates. Product behaviour and scope are defined in [plan.md](./plan.md); decision history remains in [running-notes.md](./running-notes.md).
+This file is the maintained source for exact user-facing scenario, result, fallback, validation, error and recovery copy; official links; shared warnings; and source-verification dates. Product behaviour and scope are defined in [plan1.md](../plan1.md); decision history remains in [running-notes.md](./running-notes.md).
 
 ## Content rules
 
