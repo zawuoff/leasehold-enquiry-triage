@@ -231,6 +231,11 @@ Network failures, malformed responses and HTTP 500 responses use this same visib
 
 - V1 has one originating scenario, so no within-topic deduplication is currently required.
 
+## Adviser callback (draft — pending promotion)
+
+- **Purpose note (accepted):** “We only use your name and email to reply to this enquiry — nothing else. In this prototype, they’re not saved.” Shown under the callback intro on the next-steps step, so the user knows why name/email are asked for.
+- Name + email are optional, validated, acknowledged, then **discarded** — not stored (matches the V1 no-persistence boundary).
+
 ## Content limitations
 
 - The service-charge scenario uses the broader official service-charges section because one deep link cannot represent every ordinary service-charge and major-works concern.

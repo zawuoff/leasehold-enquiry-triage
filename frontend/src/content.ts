@@ -1,9 +1,10 @@
-// Static UI chrome, mirrored from docs/content.md — keep in sync. Result-card
-// copy and scenario labels come from the API, not from here.
-//
-// NOTE: two strings marked DRAFT are not yet in content.md (it has no guided
-// picker heading/hint). See docs/running-notes.md — promote them to content.md
-// once confirmed.
+// Static UI chrome. Result-card copy, scenario labels and warnings come from the
+// API (backend content.py / docs/content.md), not from here. Strings still marked
+// DRAFT are pending promotion into docs/content.md.
+
+// Shared literals (referenced in more than one place below).
+export const MAX_TEXT_LENGTH = 1000
+export const CONTACT_URL = 'https://www.lease-advice.org/about-us/get-in-touch/'
 
 export const copy = {
   appTitle: 'Leasehold enquiry triage',
@@ -37,21 +38,15 @@ export const copy = {
     nextSteps: 'Your next steps', // DRAFT
     feedback: 'Was this helpful?',
     done: 'Thanks for using this service', // DRAFT
+    doneBody: 'You can start a new enquiry at any time.', // DRAFT
   },
   nav: {
     back: 'Back',
     continueLabel: 'Continue',
-    skip: 'Skip',
+    finish: 'Finish',
     startAgain: 'Start again',
   },
-  picker: {
-    heading: 'Choose the option that best matches your situation', // DRAFT
-    hint: 'Select one or two options.', // DRAFT
-    submit: 'Show relevant guidance',
-    notSure: 'I’m not sure / something else',
-  },
   freeText: {
-    heading: 'Before you describe your situation',
     // Shortened, two-line privacy notice (inset) — less text-heavy. DRAFT.
     privacyPrimary:
       'Do not include personal details — such as names, addresses or reference numbers.',
@@ -60,9 +55,7 @@ export const copy = {
     label: 'Describe your situation',
     placeholder: 'Start typing here…',
     hint: 'Briefly describe the main issue in your own words. You do not need to use legal terms. Maximum 1,000 characters.',
-    maxLength: 1000,
-    submit: 'Show relevant guidance',
-    back: 'Back',
+    maxLength: MAX_TEXT_LENGTH,
     // One example per topic so the guidance is relevant whatever the enquiry. DRAFT.
     examplesLabel: 'For example',
     examples: [
@@ -73,14 +66,15 @@ export const copy = {
   },
   results: {
     contact: 'Contact LEASE',
-    contactUrl: 'https://www.lease-advice.org/about-us/get-in-touch/',
-    changeAnswers: 'Change your answers', // DRAFT
+    contactUrl: CONTACT_URL,
   },
   // DRAFT: callback/feedback copy is not yet in content.md. See running-notes.
   callback: {
     heading: 'Ask an adviser to contact you',
     intro:
       'Optional. If you would like a LEASE adviser to get in touch, add your details.',
+    why:
+      "We only use your name and email to reply to this enquiry — nothing else. In this prototype, they're not saved.",
     nameLabel: 'Your name',
     emailLabel: 'Your email address',
     submit: 'Request a callback',
@@ -92,13 +86,7 @@ export const copy = {
     yes: 'Yes',
     no: 'No',
     commentLabel: 'How could this be more helpful? (optional)',
-    submit: 'Send feedback',
     success: 'Thanks for your feedback.',
-  },
-  fallbackActions: {
-    edit: 'Edit description',
-    choose: 'Choose from common scenarios',
-    contact: 'Contact LEASE',
   },
   card: {
     whyHeading: 'Why this may be relevant',
@@ -107,8 +95,7 @@ export const copy = {
   },
   errorSummaryHeading: 'Check your answers',
   validation: {
-    invalid_mode:
-      'Choose a common scenario or select ‘I’m not sure / something else’.',
+    invalid_mode: 'Choose a topic, or describe your problem in your own words.',
     invalid_scenario_count: 'Select one or two scenarios.',
     invalid_scenario_ids:
       'One or more scenario choices could not be recognised. Choose them again.',
@@ -126,6 +113,6 @@ export const copy = {
     body: 'There was a problem with the service. Try again, or contact LEASE for guidance.',
     tryAgain: 'Try again',
     contact: 'Contact LEASE',
-    contactUrl: 'https://www.lease-advice.org/about-us/get-in-touch/',
+    contactUrl: CONTACT_URL,
   },
 }

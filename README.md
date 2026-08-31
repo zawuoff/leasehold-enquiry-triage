@@ -46,6 +46,10 @@ uv venv .venv --python 3.14 && uv pip install -r requirements.txt
 .venv/bin/python manage.py runserver
 ```
 
+`DEBUG` is off by default (env-driven). For verbose local error pages, run with
+`DJANGO_DEBUG=true .venv/bin/python manage.py runserver`. `ALLOWED_HOSTS`
+defaults to `localhost,127.0.0.1` and is overridable via `DJANGO_ALLOWED_HOSTS`.
+
 **Frontend** (Node 20+), in a second terminal:
 
 ```bash
@@ -81,8 +85,9 @@ colour contrast under jsdom — that remains a manual/next-step check.
   (yes/no + optional comment) is likewise not stored. In production these would
   need a lawful basis, a retention/deletion policy, and access controls.
 - The free-text entry warns users not to include personal details, and enquiry
-  text is never placed in a URL. `DEBUG=True` and the dev `SECRET_KEY` are for
-  local development only.
+  text is never placed in a URL. `DEBUG` is **off by default** (opt in with
+  `DJANGO_DEBUG=true` for local dev); the checked-in `SECRET_KEY` is a dev
+  placeholder and must be replaced (e.g. via env) for any real deployment.
 
 ## Deliberately left out
 

@@ -14,7 +14,6 @@ interface Props {
   onBack?: () => void
   onContinue?: () => void
   continueLabel?: string
-  onSkip?: () => void
   continueDisabled?: boolean
   busy?: boolean
 }
@@ -26,7 +25,6 @@ export default function StepCard({
   onBack,
   onContinue,
   continueLabel = copy.nav.continueLabel,
-  onSkip,
   continueDisabled,
   busy,
 }: Props) {
@@ -66,7 +64,7 @@ export default function StepCard({
 
       <Box sx={{ mt: 3.5 }}>{children}</Box>
 
-      {(onBack || onContinue || onSkip) && (
+      {(onBack || onContinue) && (
         <Box
           sx={{
             mt: 4,
@@ -89,28 +87,16 @@ export default function StepCard({
               </Button>
             )}
           </Box>
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-            {onSkip && (
-              <Button
-                onClick={onSkip}
-                disabled={busy}
-                variant="text"
-                sx={{ color: 'text.secondary', fontWeight: 600 }}
-              >
-                {copy.nav.skip}
-              </Button>
-            )}
-            {onContinue && (
-              <Button
-                onClick={onContinue}
-                disabled={continueDisabled || busy}
-                variant="contained"
-                endIcon={<ChevronRight />}
-              >
-                {busy ? 'Checking…' : continueLabel}
-              </Button>
-            )}
-          </Box>
+          {onContinue && (
+            <Button
+              onClick={onContinue}
+              disabled={continueDisabled || busy}
+              variant="contained"
+              endIcon={<ChevronRight />}
+            >
+              {busy ? 'Checking…' : continueLabel}
+            </Button>
+          )}
         </Box>
       )}
     </Paper>

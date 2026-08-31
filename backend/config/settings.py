@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,9 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-wrwriqg))o-t(3ks&dam(&n+3!vff&@grt-yqtvsdtu@algv4='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Environment-driven and off by default; set DJANGO_DEBUG=true for local dev.
+DEBUG = os.environ.get("DJANGO_DEBUG", "false").lower() == "true"
 
-ALLOWED_HOSTS = []
+# With DEBUG off, empty ALLOWED_HOSTS rejects every request, so provide a local
+# default (override with DJANGO_ALLOWED_HOSTS="host1,host2" in a real deployment).
+ALLOWED_HOSTS = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1"
+).split(",")
 
 
 # Application definition

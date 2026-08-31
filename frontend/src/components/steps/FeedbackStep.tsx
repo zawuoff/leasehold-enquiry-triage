@@ -4,7 +4,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import StepCard from '../StepCard'
-import { copy } from '../../content'
+import { copy, MAX_TEXT_LENGTH } from '../../content'
 import { postFeedback } from '../../api/triage'
 
 interface Props {
@@ -31,7 +31,7 @@ export default function FeedbackStep({ onBack, onFinish }: Props) {
       title={copy.stepHeadings.feedback}
       onBack={onBack}
       onContinue={finish}
-      continueLabel={copy.nav.startAgain}
+      continueLabel={copy.nav.finish}
     >
       <Box role="group" aria-label={copy.stepHeadings.feedback} sx={{ display: 'flex', gap: 1.5 }}>
         {([
@@ -62,7 +62,7 @@ export default function FeedbackStep({ onBack, onFinish }: Props) {
             multiline
             minRows={2}
             fullWidth
-            slotProps={{ htmlInput: { maxLength: 1000 } }}
+            slotProps={{ htmlInput: { maxLength: MAX_TEXT_LENGTH } }}
           />
         </Box>
       )}

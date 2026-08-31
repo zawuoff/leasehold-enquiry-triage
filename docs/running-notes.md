@@ -2331,3 +2331,43 @@ to make the free-text step less text-heavy:
 Verified live: subtitle/privacy/label/placeholder/examples all match the frame;
 label `for` matches the textarea id and `aria-describedby` resolves to hint +
 examples (axe test on the free-text screen passes).
+
+## 2026-08-31 — Hardening pass (hardening-pass branch)
+
+- **Dead-copy cleanup** in `content.ts`: removed orphaned `picker`,
+  `fallbackActions`, `freeText.heading/.submit/.back`, `results.changeAnswers`,
+  `feedback.submit`, `nav.skip` (and the unreachable Skip button + `onSkip` prop
+  in `StepCard`). Fixed the stale file-header comment and the `invalid_mode`
+  message (it pointed to an option that no longer exists).
+- **Feedback button relabel**: the feedback step's primary button was "Start
+  again" but only advances to the done step (which also says "Start again") →
+  relabelled to **"Finish"** (`nav.finish`); the done step keeps "Start again".
+- **Consistency fixes**: `ServiceError` now renders in `StepCard` (shared Paper /
+  themed h2 / focus) instead of a bare div; the done-step body moved to
+  `content.ts` (`stepHeadings.doneBody`); deduped literals into
+  `MAX_TEXT_LENGTH` (freeText + feedback comment) and `CONTACT_URL`
+  (results + serviceError).
+- **Accessibility coverage**: added vitest-axe smoke tests for every remaining
+  screen (describe/start, situation, next-steps/callback, feedback, done,
+  service-error) + a failure-path test (500 → ServiceError renders and its
+  heading receives focus). Axe flagged nothing. Bumped `testTimeout` to 15s so
+  the axe-heavy suite doesn't flake under load. 28 tests pass.
+- **Callback purpose copy**: added `callback.why` — "We only use your name and
+  email to reply to this enquiry — nothing else. In this prototype, they're not
+  saved." — shown under the intro on the next-steps callback form (explains why
+  we ask for name/email). DRAFT, with the rest of the callback copy.
+
+### Backend hardening (backend/triage/)
+
+- **Malformed / non-JSON bodies**: found that non-UTF-8 bodies raised
+  `UnicodeDecodeError` (uncaught → 500). Factored a shared `_parse_json` helper in
+  `views.py` that catches `(JSONDecodeError, UnicodeDecodeError)` and returns the
+  standard `400 {"error":{code,field}}`. Tests added: non-UTF-8 body → 400 on
+  `/api/triage`, and malformed + non-UTF-8 → 400 on `/api/callback`.
+- **Topic length guard**: `validate_callback` now bounds `topic`
+  (`MAX_TOPIC_LENGTH = 100`) like `name`/`comment`; over-long → `invalid_request`.
+  Test added.
+- **DEBUG env-driven, default False**: `settings.py` reads `DJANGO_DEBUG`
+  (default off) and `DJANGO_ALLOWED_HOSTS` (default `localhost,127.0.0.1`, needed
+  once DEBUG is off). README updated (run with `DJANGO_DEBUG=true` for verbose
+  local errors; SECRET_KEY is a dev placeholder). Backend: 49 tests pass.

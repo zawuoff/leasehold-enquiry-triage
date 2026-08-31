@@ -193,6 +193,7 @@ def classify_free_text(text):
 # RFC-5322. Upgrade to a real validator if this ever accepts stored addresses.
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 MAX_NAME_LENGTH = 100
+MAX_TOPIC_LENGTH = 100
 MAX_COMMENT_LENGTH = 1000
 
 
@@ -215,8 +216,11 @@ def validate_callback(payload):
         raise TriageError("email_invalid", "email")
 
     topic = payload.get("topic")
-    if topic is not None and not isinstance(topic, str):
-        raise TriageError("invalid_request", "topic")
+    if topic is not None:
+        if not isinstance(topic, str):
+            raise TriageError("invalid_request", "topic")
+        if len(topic) > MAX_TOPIC_LENGTH:
+            raise TriageError("invalid_request", "topic")
 
     return {
         "name": name.strip(),

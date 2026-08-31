@@ -93,6 +93,25 @@ async function gotoResult(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('heading', { name: /what we found/i })
 }
 
+async function gotoNextSteps(user: ReturnType<typeof userEvent.setup>) {
+  await gotoResult(user)
+  await user.click(continueBtn())
+  await screen.findByRole('heading', { name: /your next steps/i })
+}
+
+async function gotoFeedback(user: ReturnType<typeof userEvent.setup>) {
+  await gotoNextSteps(user)
+  await user.click(continueBtn())
+  await screen.findByRole('heading', { name: /was this helpful/i })
+}
+
+// Guided submit that fails: reaches the point where /api/triage is called.
+async function submitGuided(user: ReturnType<typeof userEvent.setup>) {
+  await chooseTopic(user, /costs and charges/i)
+  await user.click(await screen.findByRole('checkbox', { name: /my service charge bill/i }))
+  await user.click(continueBtn())
+}
+
 afterEach(() => vi.unstubAllGlobals())
 
 describe('describe step', () => {
@@ -204,10 +223,28 @@ describe('adviser callback', () => {
 })
 
 describe('accessibility', () => {
-  it('has no axe violations on the topic step', async () => {
+  it('has no axe violations on the describe (start) step', async () => {
     installFetch(() => jsonResponse(MATCHED))
     const { container } = renderApp()
     await screen.findByRole('radio', { name: /costs and charges/i })
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('has no axe violations on the free-text screen (incl. example association)', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    const { container } = renderApp()
+    await screen.findByRole('radio', { name: /costs and charges/i })
+    await user.click(screen.getByRole('button', { name: /describe in your own words/i }))
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('has no axe violations on the situation step', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    const { container } = renderApp()
+    await chooseTopic(user, /costs and charges/i)
+    await screen.findByRole('checkbox', { name: /my service charge bill/i })
     expect(await axe(container)).toHaveNoViolations()
   })
 
@@ -219,12 +256,53 @@ describe('accessibility', () => {
     expect(await axe(container)).toHaveNoViolations()
   })
 
-  it('has no axe violations on the free-text screen (incl. example association)', async () => {
+  it('has no axe violations on the next-steps step (callback form)', async () => {
     installFetch(() => jsonResponse(MATCHED))
     const user = userEvent.setup()
     const { container } = renderApp()
-    await screen.findByRole('radio', { name: /costs and charges/i })
-    await user.click(screen.getByRole('button', { name: /describe in your own words/i }))
+    await gotoNextSteps(user)
     expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('has no axe violations on the feedback step (with comment revealed)', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    const { container } = renderApp()
+    await gotoFeedback(user)
+    await user.click(screen.getByRole('button', { name: /^yes$/i }))
+    await screen.findByText('Thanks for your feedback.')
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('has no axe violations on the done step', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    const { container } = renderApp()
+    await gotoFeedback(user)
+    await user.click(screen.getByRole('button', { name: /^finish$/i }))
+    await screen.findByRole('heading', { name: /thanks for using this service/i })
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('has no axe violations on the service-error screen', async () => {
+    installFetch(() => jsonResponse(null, { ok: false, status: 500 }))
+    const user = userEvent.setup()
+    const { container } = renderApp()
+    await submitGuided(user)
+    await screen.findByRole('heading', { name: /could not check your enquiry/i })
+    expect(await axe(container)).toHaveNoViolations()
+  })
+})
+
+describe('failure path', () => {
+  it('renders the service-error screen and focuses its heading on a 500', async () => {
+    installFetch(() => jsonResponse(null, { ok: false, status: 500 }))
+    const user = userEvent.setup()
+    renderApp()
+    await submitGuided(user)
+    const heading = await screen.findByRole('heading', {
+      name: /could not check your enquiry/i,
+    })
+    expect(heading).toHaveFocus()
   })
 })
