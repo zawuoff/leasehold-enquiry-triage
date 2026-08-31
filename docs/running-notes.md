@@ -2105,3 +2105,35 @@ The task breakdown in `plan.md` has been rewritten as future implementation work
 - `content.md` remains the source for exact approved copy, warnings and verified links. No genuine inconsistency was found, so it was not edited.
 - The planning pack is 1,295 words, within the intended concise one-to-two-page range for this working format.
 - `git diff --check` passes. No production code was written.
+
+## 2026-08-31 — Guided-scenario triage built (tickets 4 + 5)
+
+### What was built
+
+- Backend domain mirrors `content.md` (`backend/triage/content.py`), with pure
+  `validate_guided` / `classify_guided` logic (`domain.py`), a guided
+  `POST /api/triage` and a `GET /api/scenarios` list endpoint. Results are
+  grouped/deduplicated by topic; scenarios sharing a topic share one heading and
+  conditional warning but keep their own explanation, next step and link.
+- Frontend guided journey (React + MUI): `ScenarioPicker` (two-selection limit),
+  `TriageResults`, `ServiceError`, an App step machine, plus focus management,
+  an error summary and axe tests. Static chrome mirrored into `src/content.ts`.
+
+### Draft copy introduced (NOT yet approved into content.md)
+
+`content.md` has no guided-picker heading or hint. Two placeholder strings were
+used in `src/content.ts`, both marked `// DRAFT`:
+
+- Picker heading: “Choose the option that best matches your situation”.
+- Selection hint (fieldset legend): “Select one or two options.”
+
+These need confirmation and, once agreed, should be promoted into `content.md`
+(and the `// DRAFT` markers removed). All other user-facing copy is verbatim from
+`content.md`.
+
+### Decisions
+
+- Guided result card link labels reuse the approved topic-level labels from
+  `content.md` (e.g. “Read costs and charges guidance”) because content.md gives
+  no per-scenario link label. Deep scenario URLs are still used as the link target.
+- Repeated scenario ids are deduplicated before the 1–2 count check.

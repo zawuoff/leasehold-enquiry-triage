@@ -2,7 +2,9 @@ import json
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
+
+from . import content, domain
 
 
 def health(request):
@@ -10,25 +12,35 @@ def health(request):
     return JsonResponse({"status": "ok"})
 
 
+@require_GET
+def scenarios(request):
+    """List the guided scenarios so the frontend renders the picker from the
+    backend (single source of copy)."""
+    return JsonResponse(
+        {"scenarios": [{"id": s["id"], "label": s["scenario"]} for s in content.SCENARIOS]}
+    )
+
+
 @csrf_exempt
 @require_POST
 def triage(request):
-    """Stub triage endpoint that proves the front/back boundary.
+    """Guided triage: 1–2 scenario ids -> topic-grouped guidance cards.
 
-    Real classification arrives in a later ticket. For now it validates that a
-    JSON body was sent and returns a stub result. POST only (require_POST → 405
-    otherwise); csrf_exempt because this API is stateless with no sessions or
-    cookies.
+    POST only (require_POST -> 405 otherwise); csrf_exempt because the API is
+    stateless with no sessions or cookies. Free-text mode is a later ticket.
     """
     try:
-        json.loads(request.body or b"{}")
+        payload = json.loads(request.body or b"{}")
     except json.JSONDecodeError:
-        return JsonResponse({"error": "invalid_json"}, status=400)
+        return JsonResponse(
+            {"error": {"code": "invalid_request", "field": None}}, status=400
+        )
 
-    return JsonResponse(
-        {
-            "status": "ok",
-            "result": None,
-            "message": "Triage endpoint stub — classification not implemented yet.",
-        }
-    )
+    try:
+        scenario_ids = domain.validate_guided(payload)
+    except domain.TriageError as error:
+        return JsonResponse(
+            {"error": {"code": error.code, "field": error.field}}, status=400
+        )
+
+    return JsonResponse(domain.classify_guided(scenario_ids))

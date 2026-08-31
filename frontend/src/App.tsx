@@ -1,58 +1,99 @@
-import { useState } from 'react'
-import Alert from '@mui/material/Alert'
-import Button from '@mui/material/Button'
+import { useEffect, useState } from 'react'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
-import { postTriage } from './api/triage'
+import ScenarioPicker from './components/ScenarioPicker'
+import TriageResults from './components/TriageResults'
+import ServiceError from './components/ServiceError'
+import { copy } from './content'
+import {
+  getScenarios,
+  postGuidedTriage,
+  TriageValidationError,
+  type Scenario,
+  type TriageResult,
+} from './api/triage'
 
-type Status = 'idle' | 'loading' | 'done' | 'error'
+type Step = 'picker' | 'results'
 
 function App() {
-  const [status, setStatus] = useState<Status>('idle')
-  const [message, setMessage] = useState('')
+  const [scenarios, setScenarios] = useState<Scenario[] | null>(null)
+  const [step, setStep] = useState<Step>('picker')
+  const [result, setResult] = useState<TriageResult | null>(null)
+  const [validationMessage, setValidationMessage] = useState<string | null>(null)
+  const [serviceError, setServiceError] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [lastIds, setLastIds] = useState<string[] | null>(null)
 
-  async function handleStart() {
-    setStatus('loading')
-    setMessage('')
+  useEffect(() => {
+    void loadScenarios()
+  }, [])
+
+  async function loadScenarios() {
+    setServiceError(false)
     try {
-      const response = await postTriage({ ping: true })
-      setMessage(response.message)
-      setStatus('done')
+      setScenarios(await getScenarios())
     } catch {
-      setMessage('Sorry, something went wrong. Please try again.')
-      setStatus('error')
+      setServiceError(true)
     }
+  }
+
+  async function submit(ids: string[]) {
+    setLoading(true)
+    setValidationMessage(null)
+    setServiceError(false)
+    setLastIds(ids)
+    try {
+      const response = await postGuidedTriage(ids)
+      setResult(response)
+      setStep('results')
+    } catch (error) {
+      if (error instanceof TriageValidationError) {
+        setValidationMessage(
+          copy.validation[error.code] ?? copy.validation.invalid_request,
+        )
+        setStep('picker')
+      } else {
+        setServiceError(true)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function retry() {
+    if (lastIds) void submit(lastIds)
+    else void loadScenarios()
+  }
+
+  let content
+  if (serviceError) {
+    content = <ServiceError onRetry={retry} retrying={loading} />
+  } else if (step === 'results' && result) {
+    content = <TriageResults result={result} />
+  } else if (scenarios) {
+    content = (
+      <ScenarioPicker
+        scenarios={scenarios}
+        onSubmit={submit}
+        loading={loading}
+        errorMessage={validationMessage}
+      />
+    )
+  } else {
+    content = <Typography component="p">Loading…</Typography>
   }
 
   return (
     <Container component="main" maxWidth="sm" sx={{ py: 6 }}>
-      <Typography variant="h1" component="h1" gutterBottom sx={{ fontSize: '2rem' }}>
-        Leasehold enquiry triage
-      </Typography>
-      <Typography variant="body1" gutterBottom>
-        Describe your leasehold problem and get a clearer next step.
-      </Typography>
-      <Button
-        variant="contained"
-        onClick={handleStart}
-        disabled={status === 'loading'}
+      <Typography
+        variant="h1"
+        component="h1"
+        gutterBottom
+        sx={{ fontSize: '2rem' }}
       >
-        {status === 'loading' ? 'Checking…' : 'Start'}
-      </Button>
-
-      {/* Announce the outcome to assistive tech as it arrives. */}
-      <div role="status" aria-live="polite">
-        {status === 'done' && (
-          <Alert severity="info" sx={{ mt: 3 }}>
-            {message}
-          </Alert>
-        )}
-        {status === 'error' && (
-          <Alert severity="error" sx={{ mt: 3 }}>
-            {message}
-          </Alert>
-        )}
-      </div>
+        {copy.appTitle}
+      </Typography>
+      {content}
     </Container>
   )
 }
