@@ -151,3 +151,106 @@ class TriageEndpointTests(SimpleTestCase):
     def test_get_is_method_not_allowed(self):
         response = self.client.get('/api/triage')
         self.assertEqual(response.status_code, 405)
+
+    def test_free_text_match_returns_topic_without_scenario_id(self):
+        response = self._post(
+            {"mode": "free_text", "free_text": "my service charge is too high"}
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["outcome"], "matched")
+        self.assertEqual(body["topics"][0]["topic"], "COSTS_AND_CHARGES")
+        self.assertNotIn("scenario_id", body["topics"][0]["cards"][0])
+
+    def test_free_text_unmatched_returns_fallback_200(self):
+        response = self._post({"mode": "free_text", "free_text": "xyzzy nonsense"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["outcome"], "fallback")
+
+    def test_free_text_blank_returns_400(self):
+        response = self._post({"mode": "free_text", "free_text": "   "})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "blank_text")
+
+    def test_unknown_mode_returns_invalid_mode(self):
+        response = self._post({"mode": "sideways", "free_text": "hi"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "invalid_mode")
+
+
+class ValidateFreeTextTests(SimpleTestCase):
+    def test_rejects_scenario_ids_alongside_text(self):
+        with self.assertRaises(domain.TriageError) as ctx:
+            domain.validate_free_text(
+                {"mode": "free_text", "free_text": "hi", "scenario_ids": ["lease-extension"]}
+            )
+        self.assertEqual(ctx.exception.code, "conflicting_fields")
+
+    def test_rejects_blank_and_whitespace(self):
+        for value in ("", "   \n\t"):
+            with self.assertRaises(domain.TriageError) as ctx:
+                domain.validate_free_text({"mode": "free_text", "free_text": value})
+            self.assertEqual(ctx.exception.code, "blank_text")
+
+    def test_rejects_non_string(self):
+        with self.assertRaises(domain.TriageError) as ctx:
+            domain.validate_free_text({"mode": "free_text", "free_text": 5})
+        self.assertEqual(ctx.exception.code, "invalid_request")
+
+    def test_rejects_over_1000_chars(self):
+        with self.assertRaises(domain.TriageError) as ctx:
+            domain.validate_free_text(
+                {"mode": "free_text", "free_text": "a" * 1001}
+            )
+        self.assertEqual(ctx.exception.code, "text_too_long")
+
+    def test_accepts_and_strips_at_limit(self):
+        text = "service charge " + "x" * (1000 - len("service charge "))
+        self.assertEqual(len(text), 1000)
+        self.assertEqual(domain.validate_free_text({"free_text": text}), text.strip())
+
+
+class ClassifyFreeTextTests(SimpleTestCase):
+    def test_costs_wording(self):
+        result = domain.classify_free_text("I think my service charge is too high")
+        self.assertEqual(result["outcome"], "matched")
+        self.assertEqual([t["topic"] for t in result["topics"]], ["COSTS_AND_CHARGES"])
+
+    def test_repairs_wording(self):
+        result = domain.classify_free_text("the roof has a leak and it is not fixed")
+        self.assertEqual(result["topics"][0]["topic"], "REPAIRS_AND_BUILDING_MANAGEMENT")
+
+    def test_lease_extension_wording(self):
+        result = domain.classify_free_text("I want to extend my lease")
+        self.assertEqual(result["topics"][0]["topic"], "LEASE_EXTENSION")
+
+    def test_overlap_returns_up_to_two_topics(self):
+        result = domain.classify_free_text(
+            "my service charge is high and the roof needs repair and maintenance"
+        )
+        topics = [t["topic"] for t in result["topics"]]
+        self.assertEqual(len(topics), 2)
+        self.assertIn("COSTS_AND_CHARGES", topics)
+        self.assertIn("REPAIRS_AND_BUILDING_MANAGEMENT", topics)
+
+    def test_unsupported_text_returns_fallback(self):
+        self.assertEqual(
+            domain.classify_free_text("the weather is lovely today")["outcome"],
+            "fallback",
+        )
+
+    def test_misspelling_falls_back(self):
+        # Documented limitation: naive matching does not correct spelling.
+        self.assertEqual(
+            domain.classify_free_text("my servce charg is to high")["outcome"],
+            "fallback",
+        )
+
+    def test_negation_still_matches_keyword(self):
+        # Documented limitation: negation is not detected.
+        self.assertEqual(
+            domain.classify_free_text("I have no problem with my service charge")[
+                "outcome"
+            ],
+            "matched",
+        )

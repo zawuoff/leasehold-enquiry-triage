@@ -154,3 +154,70 @@ SCENARIOS = [
 ]
 
 SCENARIOS_BY_ID = {s["id"]: s for s in SCENARIOS}
+
+# Topic display order (also the tie-break order for free-text ranking).
+TOPIC_ORDER = list(TOPICS)
+
+# Free-text results use topic-level cards (no scenario_id). Copy from content.md.
+FREE_TEXT_CARDS = {
+    "COSTS_AND_CHARGES": {
+        "why": (
+            "Your description may concern a payment connected with your lease, "
+            "such as a service charge, ground rent or another charge. This result "
+            "does not decide whether an amount is payable or reasonable."
+        ),
+        "next_step": (
+            "Read LEASE’s costs and charges guidance to find information about "
+            "service charges, ground rent, major works and other common charges."
+        ),
+        "link_label": "Read costs and charges guidance",
+        "url": "https://www.lease-advice.org/costs-and-charges/",
+        "verified": "30 August 2026",
+    },
+    "REPAIRS_AND_BUILDING_MANAGEMENT": {
+        "why": (
+            "Your description may concern repairs, maintenance or how your "
+            "building is managed. The relevant guidance can depend on the part of "
+            "the building, who manages it and what the lease says. This result does "
+            "not decide who is responsible."
+        ),
+        "next_step": (
+            "Read LEASE’s building management guidance to find information about "
+            "repairs, maintenance and problems with managing a leasehold building."
+        ),
+        "link_label": "Read building management guidance",
+        "url": "https://www.lease-advice.org/building-management/",
+        "verified": "30 August 2026",
+    },
+    "LEASE_EXTENSION": {
+        "why": (
+            "Your description may concern extending a lease. The process and "
+            "guidance can differ for flats and leasehold houses. This result does "
+            "not decide whether you qualify, what it may cost or which route is "
+            "suitable."
+        ),
+        "next_step": (
+            "Read LEASE’s lease extension guidance, then choose the information "
+            "for a flat or a leasehold house."
+        ),
+        "link_label": "Read lease extension guidance",
+        "url": "https://www.lease-advice.org/lease-extension/",
+        "verified": "30 August 2026",
+    },
+}
+
+# Shown when free text matches no topic.
+FALLBACK = {
+    "heading": "We could not match your question",
+    "body": (
+        "This prototype may not recognise the wording, or your question may be "
+        "outside the topics it covers. You can still use LEASE guidance or contact "
+        "LEASE."
+    ),
+    "next_step": (
+        "Try editing your description without adding personal details, or choose "
+        "from the common scenarios. If neither helps, contact LEASE for guidance."
+    ),
+    "contact_url": "https://www.lease-advice.org/about-us/get-in-touch/",
+    "verified": "30 August 2026",
+}

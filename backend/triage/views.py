@@ -24,10 +24,10 @@ def scenarios(request):
 @csrf_exempt
 @require_POST
 def triage(request):
-    """Guided triage: 1–2 scenario ids -> topic-grouped guidance cards.
+    """Triage a guided or free-text enquiry -> topic cards or the safe fallback.
 
     POST only (require_POST -> 405 otherwise); csrf_exempt because the API is
-    stateless with no sessions or cookies. Free-text mode is a later ticket.
+    stateless with no sessions or cookies.
     """
     try:
         payload = json.loads(request.body or b"{}")
@@ -36,11 +36,17 @@ def triage(request):
             {"error": {"code": "invalid_request", "field": None}}, status=400
         )
 
+    mode = payload.get("mode") if isinstance(payload, dict) else None
     try:
-        scenario_ids = domain.validate_guided(payload)
+        if mode == "guided":
+            result = domain.classify_guided(domain.validate_guided(payload))
+        elif mode == "free_text":
+            result = domain.classify_free_text(domain.validate_free_text(payload))
+        else:
+            raise domain.TriageError("invalid_mode", "mode")
     except domain.TriageError as error:
         return JsonResponse(
             {"error": {"code": error.code, "field": error.field}}, status=400
         )
 
-    return JsonResponse(domain.classify_guided(scenario_ids))
+    return JsonResponse(result)

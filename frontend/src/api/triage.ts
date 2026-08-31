@@ -9,11 +9,19 @@ export interface TriageLink {
 }
 
 export interface TriageCard {
-  scenario_id: string
-  scenario: string
+  scenario_id?: string // omitted for free-text cards
+  scenario?: string // omitted for free-text cards
   why: string
   next_step: string
   link: TriageLink
+  verified: string
+}
+
+export interface TriageFallback {
+  heading: string
+  body: string
+  next_step: string
+  contact_url: string
   verified: string
 }
 
@@ -32,8 +40,9 @@ export interface TriageTopic {
 }
 
 export interface TriageResult {
-  outcome: string
-  topics: TriageTopic[]
+  outcome: 'matched' | 'fallback'
+  topics?: TriageTopic[]
+  fallback?: TriageFallback
 }
 
 /** A 400 from the API, carrying a stable code the UI maps to a message. */
@@ -58,13 +67,11 @@ export async function getScenarios(): Promise<Scenario[]> {
   return body.scenarios
 }
 
-export async function postGuidedTriage(
-  scenarioIds: string[],
-): Promise<TriageResult> {
+async function submitTriage(payload: unknown): Promise<TriageResult> {
   const response = await fetch('/api/triage', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: 'guided', scenario_ids: scenarioIds }),
+    body: JSON.stringify(payload),
   })
 
   if (response.status === 400) {
@@ -76,4 +83,12 @@ export async function postGuidedTriage(
     throw new Error(`Triage request failed (${response.status})`)
   }
   return (await response.json()) as TriageResult
+}
+
+export function postGuidedTriage(scenarioIds: string[]): Promise<TriageResult> {
+  return submitTriage({ mode: 'guided', scenario_ids: scenarioIds })
+}
+
+export function postFreeTextTriage(freeText: string): Promise<TriageResult> {
+  return submitTriage({ mode: 'free_text', free_text: freeText })
 }

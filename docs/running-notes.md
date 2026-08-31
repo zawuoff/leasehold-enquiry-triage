@@ -2137,3 +2137,30 @@ These need confirmation and, once agreed, should be promoted into `content.md`
   `content.md` (e.g. “Read costs and charges guidance”) because content.md gives
   no per-scenario link label. Deep scenario URLs are still used as the link target.
 - Repeated scenario ids are deduplicated before the 1–2 count check.
+
+## 2026-08-31 — Free-text triage built (ticket 6)
+
+### What was built
+
+- Backend: a deterministic keyword classifier (`domain.KEYWORDS`,
+  `classify_free_text`) mapping a description to up to two topics (ranked by hit
+  count, tie-broken by topic order) or the approved fallback; `validate_free_text`
+  (blank/too-long/conflicting); the `POST /api/triage` view now dispatches on
+  `mode` (guided vs free_text). Free-text card copy + fallback copy mirrored into
+  `content.py` from content.md.
+- Frontend: `FreeTextEntry` (privacy notice, 1,000-char cap) and `Fallback`
+  components; the picker gained an "I'm not sure / something else" route
+  (mutually exclusive with scenarios); `TriageResults` now also renders
+  free-text cards (no scenario). App step machine: picker → freetext →
+  results/fallback, with Edit description / Choose from common scenarios recovery.
+
+### Decisions / limitations
+
+- Classifier uses naive substring matching (marked with a `ponytail:` comment):
+  misspellings and negated phrases fall to the safe fallback rather than
+  mis-signposting. This is deliberate for a legal-adjacent tool; a real matcher
+  (stemming/synonyms/negation) is a later upgrade.
+- Free-text free_text is hard-capped at 1,000 chars in the textarea; the server
+  still enforces `text_too_long` for API robustness.
+- All ticket-6 user-facing copy is verbatim from content.md — no new draft
+  strings (the two picker DRAFT strings from ticket 5 still await confirmation).

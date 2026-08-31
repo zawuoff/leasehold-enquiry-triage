@@ -11,6 +11,21 @@ export const copy = {
     heading: 'Choose the option that best matches your situation', // DRAFT
     hint: 'Select one or two options.', // DRAFT
     submit: 'Show relevant guidance',
+    notSure: 'I’m not sure / something else',
+  },
+  freeText: {
+    heading: 'Before you describe your situation',
+    privacy:
+      'Do not include names, addresses, contact details, reference numbers or information about other people. When you continue, your description is sent to this prototype to suggest relevant guidance. It is not added to an account or enquiry history.',
+    label: 'Describe your situation',
+    hint: 'Briefly describe the main issue in your own words. You do not need to use legal terms. Maximum 1,000 characters.',
+    maxLength: 1000,
+    submit: 'Show relevant guidance',
+  },
+  fallbackActions: {
+    edit: 'Edit description',
+    choose: 'Choose from common scenarios',
+    contact: 'Contact LEASE',
   },
   card: {
     whyHeading: 'Why this may be relevant',
@@ -27,6 +42,8 @@ export const copy = {
     conflicting_fields:
       'Choose scenarios or describe your situation in your own words—not both.',
     invalid_request: 'We could not read your answers. Go back and try again.',
+    blank_text: 'Describe your situation before continuing.',
+    text_too_long: 'Shorten your description to 1,000 characters or fewer.',
   } as Record<string, string>,
   serviceError: {
     heading: 'We could not check your enquiry',
