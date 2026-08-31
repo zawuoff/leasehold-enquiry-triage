@@ -24,11 +24,6 @@ routes. Signposting, **not** legal advice.
   alternatives, critiques, trade-offs, assumptions, rejected approaches and
   confirmed decisions. Update it after meaningful discussions, including ideas
   that are not selected.
-- **`docs/plan.md`**: concise planning pack containing confirmed decisions only.
-  Keep it focused on the problem, useful V1 outcome, assumptions, technical
-  boundaries, ordered implementation tickets and key risks. Do not include
-  detailed history, exact copy, rejected alternatives or resolved questions.
-  Update it only when a decision is confirmed.
 - **`docs/content.md`**: source of truth for approved user-facing wording,
   warnings, validation/error messages, action behaviour, official URLs and
   verification dates. Do not add proposed or invented copy. Discuss drafts in
@@ -41,6 +36,18 @@ routes. Signposting, **not** legal advice.
   frontend. **Do not use any other UI / component / styling library.**
 - This is the standing decision and supersedes any earlier discussion of
   `govuk-frontend` or other GOV.UK component libraries.
+
+## Accessibility
+
+- **Standing target: WCAG 2.2 AA.** Keep it in mind from scaffold onward, not as
+  a late add-on.
+- In practice: semantic landmarks and a single `<h1>` per screen, labelled form
+  controls, visible keyboard focus, full keyboard operability, clear error
+  identification (error summary + inline messages), sufficient colour contrast,
+  and live-region announcements for dynamic changes.
+- Every screen ships with an automated accessibility test (`vitest-axe`) plus
+  role/label assertions. MUI's accessible primitives help, but correct usage is
+  on us and must be tested.
 
 ## Working agreement
 
