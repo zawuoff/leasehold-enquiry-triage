@@ -41,3 +41,13 @@ It only works if the user already speaks the domain's vocabulary. Someone who wr
 Tests cover behaviour, but partly bake in these quirks. Coverage is decent, but several tests assert what the matcher currently does rather than what the user needs, so they'd pass even where the matching is arguably wrong. Missing: adversarial real-world paraphrases, and a check that the two-topic cap doesn't surface a near-noise second topic.
 
 Email validation is a shape check only (documented as such) — fine for a prototype, but it validates format, not deliverability, so "asdf@asdf" passes.
+
+### Plan vs build
+
+A few places where the shipped build diverges from what the plan claims. I'm flagging these honestly rather than hiding them. (Item 1 is the free-text matching / domain-vocabulary limitation described above.)
+
+2. **Unknown request fields aren't rejected.** The plan says unexpected fields are rejected, but the backend actually ignores extra keys in the request body. I'm noting this rather than adding code for it: silently ignoring unknown fields is acceptable, common practice, so this is a documentation overclaim rather than a bug worth new code.
+
+3. **The "integration" tests mock `fetch`.** They verify the React app against an agreed request/response contract, not a live Django backend. The plan's "one real React→Django journey test" overstated what exists — the two sides are tested separately: React against a mocked contract, and the backend through its own Django test client. A genuine end-to-end test would need both running together.
+
+4. **The guided journey diverged from the plan's rationale.** The plan argues that stressed, non-expert users can't reliably self-categorise, yet the shipped UI asks them to pick a topic first. I'd frame this as a considered trade-off rather than an accident. It's topic-first because: (a) accessibility — a shorter, single-topic list at each step is easier to navigate with a keyboard or screen reader than one long mixed list of every scenario across all three topics; and (b) it scales — topic-first is the pattern that still works when scenarios grow to 20+, where a flat list would not. That said, it does still drift from the plan's stated reasoning, so the honest resolution is to either update the plan to own this decision or reconsider the flow — I am flagging it rather than quietly leaving the plan and the UI disagreeing.
