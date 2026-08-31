@@ -150,6 +150,7 @@ export default function DescribeStep({
             {copy.freeText.privacy}
           </Typography>
           <TextField
+            id="freetext"
             label={copy.freeText.label}
             helperText={copy.freeText.hint}
             multiline
@@ -157,9 +158,26 @@ export default function DescribeStep({
             fullWidth
             value={text}
             onChange={(event) => setText(event.target.value)}
-            slotProps={{ htmlInput: { maxLength: copy.freeText.maxLength } }}
+            slotProps={{
+              htmlInput: {
+                maxLength: copy.freeText.maxLength,
+                'aria-describedby': 'freetext-helper-text freetext-examples',
+              },
+            }}
             disabled={loading}
           />
+          <Box id="freetext-examples" sx={{ mt: 2 }}>
+            <Typography sx={{ fontWeight: 600, color: tokens.navy, mb: 0.5 }}>
+              {copy.freeText.examplesLabel}
+            </Typography>
+            <Box component="ul" sx={{ m: 0, pl: 2.5, color: 'text.secondary' }}>
+              {copy.freeText.examples.map((example) => (
+                <Typography component="li" key={example} sx={{ mb: 0.5 }}>
+                  {example}
+                </Typography>
+              ))}
+            </Box>
+          </Box>
         </Box>
       )}
     </StepCard>

@@ -2265,3 +2265,40 @@ while the guided path keeps it (Describe → Details → Result → …). Merged
 `TopicStep` + `FreeTextStep` back into a single `DescribeStep` with the toggle;
 the stepper is now assembled per mode. Verified live: toggling to free text drops
 Details and a free-text submit lands directly on "Your result".
+
+## 2026-08-31 — UI/UX tweaks (ui-changes branch)
+
+### Step labels reworded
+
+- `steps.details`: "Details / Your situation" → **"Your situation / A few details"**.
+- `steps.result`: "Result / Matched topic" → **"What we found / Your topic"**.
+- `stepHeadings.result`: "Your result" → **"What we found"** (avoids colliding with
+  the existing "Next steps" step label). describe / nextSteps / feedback unchanged.
+
+### Free-text example — exploring how to show it
+
+Goal: give the free-text user an example of what to write. Proposed example
+(plain, non-PII, and matches the costs topic so it also demonstrates the tool):
+"My service charge has gone up a lot this year and I don't understand why."
+
+Two placements considered:
+
+- **A — below the box (hint text).** Pros: accessible + persistent (stays while
+  typing, `aria-describedby`, announced by SR); normal-text contrast; the GOV.UK
+  Design System's recommended pattern. Cons: a little vertical space; users may
+  type before reading (mitigated by keeping it near the existing hint).
+- **B — placeholder inside the box.** Pros: compact, in-context, familiar. Cons:
+  disappears the moment they type (guidance lost mid-task); low contrast (often
+  fails 4.5:1); unreliable as a label substitute; GOV.UK/WCAG advise against
+  using placeholders for hints. Worse for a stressed public audience.
+
+Recommendation: **A**, for WCAG 2.2 AA + GOV.UK alignment.
+
+**Decision:** go with **A (below the box)**. Also show **one example per topic**
+(three) so the guidance is relevant whatever the enquiry — the free-text box
+isn't topic-scoped, so a per-topic set covers everyone. Implemented in
+`DescribeStep` as a visible `For example:` list under the field, associated to the
+input via `aria-describedby` (verified by an axe test on the free-text screen).
+Placeholder approach **rejected** (disappears on typing, low contrast). These
+per-topic examples could later be shown contextually if free text ever becomes
+topic-scoped.

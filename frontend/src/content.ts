@@ -13,8 +13,8 @@ export const copy = {
   // "Details"; free text skips it). Variant A visual. DRAFT.
   steps: {
     describe: { label: 'Describe', sub: 'Your problem' },
-    details: { label: 'Details', sub: 'Your situation' },
-    result: { label: 'Result', sub: 'Matched topic' },
+    details: { label: 'Your situation', sub: 'A few details' },
+    result: { label: 'What we found', sub: 'Your topic' },
     nextSteps: { label: 'Next steps', sub: 'Guidance & contact' },
     feedback: { label: 'Feedback', sub: 'Was this helpful' },
   },
@@ -31,7 +31,7 @@ export const copy = {
     selectUpToTwo: 'Select up to 2',
   },
   stepHeadings: {
-    result: 'Your result', // DRAFT
+    result: 'What we found', // DRAFT
     nextSteps: 'Your next steps', // DRAFT
     feedback: 'Was this helpful?',
     done: 'Thanks for using this service', // DRAFT
@@ -57,6 +57,13 @@ export const copy = {
     maxLength: 1000,
     submit: 'Show relevant guidance',
     back: 'Back',
+    // One example per topic so the guidance is relevant whatever the enquiry. DRAFT.
+    examplesLabel: 'For example:',
+    examples: [
+      'My service charge has gone up a lot this year and I don’t understand why.',
+      'The lift in my block has been broken for weeks and the managing agent isn’t fixing it.',
+      'My lease has about 80 years left and I want to know how to extend it.',
+    ],
   },
   results: {
     contact: 'Contact LEASE',
