@@ -18,12 +18,36 @@ routes. Signposting, **not** legal advice.
 - **Scope:** leasehold only (park homes out of scope). Three topics: costs &
   charges, repairs & building management, lease extension.
 
+## Documentation
+
+- **`docs/running-notes.md`**: chronological working log. Record explorations,
+  alternatives, critiques, trade-offs, assumptions, rejected approaches and
+  confirmed decisions. Update it after meaningful discussions, including ideas
+  that are not selected.
+- **`docs/content.md`**: source of truth for approved user-facing wording,
+  warnings, validation/error messages, action behaviour, official URLs and
+  verification dates. Do not add proposed or invented copy. Discuss drafts in
+  `running-notes.md` first and move them into `content.md` only after
+  confirmation.
+
 ## Frontend library
 
 - Use **[MUI](https://mui.com/)** (`@mui/material` + `@mui/system`) for the
   frontend. **Do not use any other UI / component / styling library.**
 - This is the standing decision and supersedes any earlier discussion of
   `govuk-frontend` or other GOV.UK component libraries.
+
+## Accessibility
+
+- **Standing target: WCAG 2.2 AA.** Keep it in mind from scaffold onward, not as
+  a late add-on.
+- In practice: semantic landmarks and a single `<h1>` per screen, labelled form
+  controls, visible keyboard focus, full keyboard operability, clear error
+  identification (error summary + inline messages), sufficient colour contrast,
+  and live-region announcements for dynamic changes.
+- Every screen ships with an automated accessibility test (`vitest-axe`) plus
+  role/label assertions. MUI's accessible primitives help, but correct usage is
+  on us and must be tested.
 
 ## Working agreement
 
