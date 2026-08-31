@@ -54,6 +54,11 @@ information or a safe next action.
 - Persistence / accounts, a full advice engine, weighted or AI classification,
   Wagtail, DRF, production deployment, and pixel-perfect / full GOV.UK Design
   System implementation.
+- **Semantic search upgrade (future).** Replace pure keyword/synonym matching with
+  a **vector DB + LLM hybrid** — embed the enquiry, retrieve the nearest knowledge
+  articles, optionally an LLM re-rank. It would improve paraphrase and misspelling
+  handling, but adds cost, latency, and a new accuracy-vs-safety review burden —
+  hence out of scope for the V1 slice.
 
 ## 3. Assumptions and honest unknowns
 
@@ -90,6 +95,20 @@ information or a safe next action.
 4. **Optional actions** — "Ask an adviser to contact me" (name + email + topic),
    and "Was this helpful?" (Yes/No + optional comment).
 
+### Use-case scenarios
+
+- **Best case** — the user clearly expresses their issue (a chosen scenario, or
+  free text with unambiguous wording) and is matched to a **single topic** on
+  first input, with its explanation, next step, and verified LEASE link.
+- **Ambiguous case** — the input maps to **more than one topic**, or is partially
+  unclear. We return **up to two topics, each explained separately** (our existing
+  behaviour), or fall back if nothing is confident. This is **deterministic
+  disambiguation via multiple results — not** a conversational clarifying-question
+  flow, which is deliberately left as future work.
+- **Fallback case** — **no confident match.** We surface the honest "we couldn't
+  confidently match this" plus the direct LEASE contact routes. We **never guess
+  on a legal matter.**
+
 ## 5. Architecture
 
 - **Frontend:** React (Vite) SPA, using **MUI** (`@mui/material` + `@mui/system`)
@@ -111,6 +130,115 @@ information or a safe next action.
   400 with a stable code; unexpected failure = 500. Responses never echo enquiry
   text or expose rules/scores/conclusions.
 - **Dev:** Vite dev-proxy to Django. Documented single-command-ish local setup.
+
+### API examples
+
+Concise request/response shapes; all requests are `Content-Type: application/json`.
+
+**`POST /api/triage`** — guided or free-text.
+
+```json
+// request (guided)
+{ "mode": "guided", "scenario_ids": ["service-charge-major-works"] }
+// request (free text)
+{ "mode": "free_text", "free_text": "my service charge went up sharply" }
+```
+
+```json
+// 200 — matched (free-text cards omit scenario_id/scenario; warning may be null)
+{
+  "outcome": "matched",
+  "topics": [{
+    "topic": "COSTS_AND_CHARGES",
+    "label": "Costs and charges",
+    "heading": "This may relate to costs and charges.",
+    "warning": { "text": "…", "source": "https://…", "verified": "30 August 2026" },
+    "cards": [{
+      "scenario_id": "service-charge-major-works",
+      "scenario": "…", "why": "…", "next_step": "…",
+      "link": { "label": "Read costs and charges guidance", "url": "https://…" },
+      "verified": "30 August 2026"
+    }]
+  }]
+}
+```
+
+```json
+// 200 — no/weak match → fallback
+{ "outcome": "fallback", "fallback": {
+  "heading": "We could not match your question",
+  "body": "…", "next_step": "…",
+  "contact_url": "https://…", "verified": "30 August 2026"
+} }
+// 400 — invalid input (stable code + field)
+{ "error": { "code": "invalid_scenario_count", "field": "scenario_ids" } }
+```
+
+**`POST /api/callback`** — validated + acknowledged, never stored.
+
+```json
+// request
+{ "name": "Sam Lee", "email": "sam@example.com", "topic": "Costs and charges" }
+// 200
+{ "status": "received" }
+// 400
+{ "error": { "code": "email_invalid", "field": "email" } }
+```
+
+**`POST /api/feedback`** — validated + acknowledged, never stored.
+
+```json
+// request  (comment optional)
+{ "helpful": true, "comment": "Clear and quick." }
+// 200
+{ "status": "received" }
+// 400
+{ "error": { "code": "helpful_required", "field": "helpful" } }
+```
+
+### Proposed data models
+
+V1 is **deliberately stateless with no database** — nothing below is stored. These
+are the entity *shapes* we'd propose **if** a later version persisted anything; the
+exercise invites proposing data models, so this documents the thinking without
+adding storage to V1.
+
+**Query / intent** — what the user submits. **Transient in V1: processed
+in-memory and never stored.**
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `input_mode` | enum `guided` \| `free_text` | which route was used |
+| `scenario_ids` | list[string] | guided only; 1–2 known scenario IDs |
+| `free_text` | string | free-text only; ≤ 1,000 chars |
+| `matched_topics` | list[topic key] | 0–2 resulting topics |
+| `outcome` | enum `matched` \| `fallback` | whether it fell back |
+| `created_at` | timestamp | when submitted |
+
+**Knowledge article** — the stored answer content. This model **effectively
+already exists** as our hardcoded topic → copy → LEASE-link data (`content.ts` and
+the backend approved-result data in `content.py`); persisting it would just move
+it into a table or CMS (e.g. Wagtail).
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `topic_key` | string (enum) | e.g. `COSTS_AND_CHARGES` |
+| `explanation` | text | plain-English "why this may be relevant" |
+| `next_step` | text | cautious, non-advisory next step |
+| `lease_url` | string (URL) | verified LEASE guidance link |
+| `verified_on` | date | source-verification date |
+| `contact_routes` | list / object | link (+ phone / email if added) |
+
+**User info** — only the adviser-callback fields. **V1 validates then discards
+these;** if ever persisted, this needs a lawful basis and a retention/access/
+deletion policy.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `name` | string | for a human reply |
+| `email` | string | reply address |
+| `topic` | string | topic the callback relates to |
+| `created_at` | timestamp | when requested |
 
 ## 6. Task breakdown (ordered — plan → build)
 
