@@ -1,0 +1,14 @@
+# Hardening notes
+
+## Hardening pass
+
+After finishing the main feature, I did a separate quality pass focused on a small number of changes that I thought would make the prototype safer and more reliable. I kept these changes separate from the main build rather than using the hardening stage to rewrite or restructure the application.
+
+* Reduced the amount of personal data collected. I changed the callback form so that both name and email are optional. I also updated the copy to make it clear that this is a prototype. The details are validated, but they are not sent or stored, so nobody is actually contacted. I thought this was important because otherwise the form could give the impression that a real callback had been requested.
+* Improved accessibility coverage. I extended the existing `vitest-axe` checks so that all of the main screens are covered, including the start screen, next steps, feedback, done, callback and service-error states. I also added checks around focus behaviour, particularly making sure focus moves to the validation error summary and the service-error screen when something goes wrong. Where axe found an issue, I fixed the underlying problem rather than disabling the rule.
+* Added coverage for a failed API request. Most of the existing tests covered successful journeys and validation errors, so I added a test for `/api/triage` returning a 500 response. This checks that the service-error screen is shown and that focus moves to it correctly.
+* Tightened some backend behaviour. I checked that malformed or non-JSON request bodies return a controlled `400` response using the application's normal error shape rather than causing an unhandled `500`. I also changed Django `DEBUG` so that it is controlled by the environment and defaults to off instead of being hardcoded on. Input limits for things such as free text, name, topic and comments are also defined as named constants rather than scattered values.
+* Simplified some of the user-facing wording. A few labels still sounded like internal or technical terminology, so I changed things like "Result" and "Matched topic" to "What we found" and "Your topic". I also added example prompts underneath the free-text field to give users a better idea of what they can type. One feedback button was labelled "Start again" even though it did not actually restart the journey, so I changed that to "Finish".
+* Cleaned up old code and copy. I removed some unused content keys and an unreachable Skip button that were left behind from earlier iterations. I also updated a few stale comments and validation messages so that the code and `content.ts` reflect what the current interface actually does.
+
+Overall, I tried to use the hardening pass for targeted fixes rather than introducing new features. The main areas I focused on were removing misleading behaviour, improving failure handling and accessibility, and cleaning up things that had drifted during development.
