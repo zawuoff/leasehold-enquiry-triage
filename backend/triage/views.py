@@ -14,10 +14,19 @@ def health(request):
 
 @require_GET
 def scenarios(request):
-    """List the guided scenarios so the frontend renders the picker from the
-    backend (single source of copy)."""
+    """List topics and guided scenarios so the frontend renders the picker (with
+    topic tags) from the backend — a single source of copy."""
     return JsonResponse(
-        {"scenarios": [{"id": s["id"], "label": s["scenario"]} for s in content.SCENARIOS]}
+        {
+            "topics": [
+                {"key": key, "label": content.TOPICS[key]["label"]}
+                for key in content.TOPIC_ORDER
+            ],
+            "scenarios": [
+                {"id": s["id"], "label": s["scenario"], "topic": s["topic"]}
+                for s in content.SCENARIOS
+            ],
+        }
     )
 
 
@@ -50,3 +59,39 @@ def triage(request):
         )
 
     return JsonResponse(result)
+
+
+def _acknowledge(request, validator):
+    """Shared POST-JSON-validate-acknowledge flow for callback/feedback.
+
+    The validated data is deliberately discarded — nothing is persisted.
+    """
+    try:
+        payload = json.loads(request.body or b"{}")
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": {"code": "invalid_request", "field": None}}, status=400
+        )
+
+    try:
+        validator(payload)
+    except domain.TriageError as error:
+        return JsonResponse(
+            {"error": {"code": error.code, "field": error.field}}, status=400
+        )
+
+    return JsonResponse({"status": "received"})
+
+
+@csrf_exempt
+@require_POST
+def callback(request):
+    """Accept an adviser-callback request and acknowledge it. Never stored."""
+    return _acknowledge(request, domain.validate_callback)
+
+
+@csrf_exempt
+@require_POST
+def feedback(request):
+    """Accept 'was this helpful?' feedback and acknowledge it. Never stored."""
+    return _acknowledge(request, domain.validate_feedback)

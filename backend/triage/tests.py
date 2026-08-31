@@ -16,13 +16,19 @@ class HealthEndpointTests(SimpleTestCase):
 
 
 class ScenariosEndpointTests(SimpleTestCase):
-    def test_lists_all_scenarios_with_id_and_label(self):
+    def test_lists_scenarios_with_topic_and_topics(self):
         response = self.client.get('/api/scenarios')
         self.assertEqual(response.status_code, 200)
-        items = response.json()['scenarios']
+        body = response.json()
+
+        items = body['scenarios']
         self.assertEqual(len(items), len(content.SCENARIOS))
         self.assertEqual({i['id'] for i in items}, set(content.SCENARIOS_BY_ID))
-        self.assertTrue(all(i['label'] for i in items))
+        self.assertTrue(all(i['label'] and i['topic'] for i in items))
+
+        topics = body['topics']
+        self.assertEqual([t['key'] for t in topics], content.TOPIC_ORDER)
+        self.assertTrue(all(t['label'] for t in topics))
 
 
 class ValidateGuidedTests(SimpleTestCase):
@@ -254,3 +260,81 @@ class ClassifyFreeTextTests(SimpleTestCase):
             ],
             "matched",
         )
+
+
+class ValidateCallbackTests(SimpleTestCase):
+    def test_accepts_and_normalises(self):
+        data = domain.validate_callback(
+            {"name": "  Sam  ", "email": " sam@example.com ", "topic": "COSTS"}
+        )
+        self.assertEqual(data, {"name": "Sam", "email": "sam@example.com", "topic": "COSTS"})
+
+    def test_requires_name(self):
+        with self.assertRaises(domain.TriageError) as ctx:
+            domain.validate_callback({"name": "  ", "email": "sam@example.com"})
+        self.assertEqual(ctx.exception.code, "name_required")
+
+    def test_rejects_bad_email(self):
+        with self.assertRaises(domain.TriageError) as ctx:
+            domain.validate_callback({"name": "Sam", "email": "not-an-email"})
+        self.assertEqual(ctx.exception.code, "email_invalid")
+
+
+class ValidateFeedbackTests(SimpleTestCase):
+    def test_accepts_bool_and_optional_comment(self):
+        self.assertEqual(
+            domain.validate_feedback({"helpful": True}),
+            {"helpful": True, "comment": None},
+        )
+        self.assertEqual(
+            domain.validate_feedback({"helpful": False, "comment": " ok "}),
+            {"helpful": False, "comment": "ok"},
+        )
+
+    def test_requires_helpful_bool(self):
+        for value in ({}, {"helpful": "yes"}):
+            with self.assertRaises(domain.TriageError) as ctx:
+                domain.validate_feedback(value)
+            self.assertEqual(ctx.exception.code, "helpful_required")
+
+
+class CallbackEndpointTests(SimpleTestCase):
+    def _post(self, payload, raw=None):
+        return self.client.post(
+            '/api/callback',
+            data=raw if raw is not None else json.dumps(payload),
+            content_type='application/json',
+        )
+
+    def test_valid_is_acknowledged(self):
+        response = self._post({"name": "Sam", "email": "sam@example.com"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "received"})
+
+    def test_bad_email_returns_400(self):
+        response = self._post({"name": "Sam", "email": "nope"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "email_invalid")
+
+    def test_get_is_405(self):
+        self.assertEqual(self.client.get('/api/callback').status_code, 405)
+
+
+class FeedbackEndpointTests(SimpleTestCase):
+    def _post(self, payload):
+        return self.client.post(
+            '/api/feedback', data=json.dumps(payload), content_type='application/json'
+        )
+
+    def test_valid_is_acknowledged(self):
+        response = self._post({"helpful": True, "comment": "clear"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "received"})
+
+    def test_missing_helpful_returns_400(self):
+        response = self._post({"comment": "clear"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["error"]["code"], "helpful_required")
+
+    def test_get_is_405(self):
+        self.assertEqual(self.client.get('/api/feedback').status_code, 405)

@@ -7,6 +7,41 @@
 
 export const copy = {
   appTitle: 'Leasehold enquiry triage',
+  brand: 'Leasehold Advisory Service',
+  strapline: 'Signposting · not legal advice',
+  // Individual stepper nodes — the wizard assembles them per path (guided keeps
+  // "Details"; free text skips it). Variant A visual. DRAFT.
+  steps: {
+    describe: { label: 'Describe', sub: 'Your problem' },
+    details: { label: 'Details', sub: 'Your situation' },
+    result: { label: 'Result', sub: 'Matched topic' },
+    nextSteps: { label: 'Next steps', sub: 'Guidance & contact' },
+    feedback: { label: 'Feedback', sub: 'Was this helpful' },
+  },
+  describe: {
+    heading: 'Describe your problem', // DRAFT
+    subtitle:
+      "Choose the area closest to your problem, or describe it in your own words. We'll point you to the right guidance and a way to reach us.", // DRAFT
+    toggleGuided: 'Pick a topic', // DRAFT
+    toggleFree: 'Describe in your own words', // DRAFT
+    topicLabel: 'What is your enquiry about?', // DRAFT
+  },
+  situationStep: {
+    heading: 'Which best describes your situation?', // DRAFT
+    selectUpToTwo: 'Select up to 2',
+  },
+  stepHeadings: {
+    result: 'Your result', // DRAFT
+    nextSteps: 'Your next steps', // DRAFT
+    feedback: 'Was this helpful?',
+    done: 'Thanks for using this service', // DRAFT
+  },
+  nav: {
+    back: 'Back',
+    continueLabel: 'Continue',
+    skip: 'Skip',
+    startAgain: 'Start again',
+  },
   picker: {
     heading: 'Choose the option that best matches your situation', // DRAFT
     hint: 'Select one or two options.', // DRAFT
@@ -21,6 +56,31 @@ export const copy = {
     hint: 'Briefly describe the main issue in your own words. You do not need to use legal terms. Maximum 1,000 characters.',
     maxLength: 1000,
     submit: 'Show relevant guidance',
+    back: 'Back',
+  },
+  results: {
+    contact: 'Contact LEASE',
+    contactUrl: 'https://www.lease-advice.org/about-us/get-in-touch/',
+    changeAnswers: 'Change your answers', // DRAFT
+  },
+  // DRAFT: callback/feedback copy is not yet in content.md. See running-notes.
+  callback: {
+    heading: 'Ask an adviser to contact you',
+    intro:
+      'Optional. If you would like a LEASE adviser to get in touch, add your details.',
+    nameLabel: 'Your name',
+    emailLabel: 'Your email address',
+    submit: 'Request a callback',
+    success:
+      'Thanks — an adviser can follow up. (Prototype: your details were not saved.)',
+  },
+  feedback: {
+    question: 'Was this helpful?',
+    yes: 'Yes',
+    no: 'No',
+    commentLabel: 'How could this be more helpful? (optional)',
+    submit: 'Send feedback',
+    success: 'Thanks for your feedback.',
   },
   fallbackActions: {
     edit: 'Edit description',
@@ -44,6 +104,9 @@ export const copy = {
     invalid_request: 'We could not read your answers. Go back and try again.',
     blank_text: 'Describe your situation before continuing.',
     text_too_long: 'Shorten your description to 1,000 characters or fewer.',
+    name_required: 'Enter your name.', // DRAFT
+    email_invalid: 'Enter a valid email address.', // DRAFT
+    helpful_required: 'Select Yes or No.', // DRAFT
   } as Record<string, string>,
   serviceError: {
     heading: 'We could not check your enquiry',

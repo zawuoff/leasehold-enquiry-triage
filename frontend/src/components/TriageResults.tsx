@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Link from '@mui/material/Link'
 import Typography from '@mui/material/Typography'
 import { copy } from '../content'
+import { tokens } from '../theme'
 import type { TriageTopic } from '../api/triage'
 
 interface Props {
@@ -11,74 +11,48 @@ interface Props {
 }
 
 export default function TriageResults({ topics }: Props) {
-  const firstHeadingRef = useRef<HTMLHeadingElement>(null)
-
-  useEffect(() => {
-    firstHeadingRef.current?.focus()
-  }, [])
-
   return (
     <div>
-      {topics.map((topic, index) => (
+      {topics.map((topic) => (
         <Box
           component="section"
           key={topic.topic}
           aria-label={topic.label}
-          sx={{ mb: 4 }}
+          sx={{ mb: 3, '&:last-of-type': { mb: 0 } }}
         >
-          <Typography
-            variant="h2"
-            component="h2"
-            tabIndex={-1}
-            ref={index === 0 ? firstHeadingRef : undefined}
-            sx={{ fontSize: '1.5rem', mb: 2, outline: 'none' }}
-          >
+          <Typography variant="h3" component="h3" sx={{ color: tokens.navy, mb: 1 }}>
             {topic.heading}
           </Typography>
 
           {topic.warning && (
-            <Alert severity="warning" sx={{ mb: 3 }}>
+            <Alert severity="warning" sx={{ my: 2 }}>
               {topic.warning.text}
             </Alert>
           )}
 
-          {topic.cards.map((card, cardIndex) => (
+          {topic.cards.map((card, index) => (
             <Box
               component="article"
-              key={card.scenario_id ?? `${topic.topic}-${cardIndex}`}
-              sx={{ mb: 3 }}
+              key={card.scenario_id ?? `${topic.topic}-${index}`}
+              sx={{ mt: 2 }}
             >
               {card.scenario && (
-                <Typography
-                  variant="h3"
-                  component="h3"
-                  sx={{ fontSize: '1.15rem', mb: 1 }}
-                >
+                <Typography sx={{ fontWeight: 700, color: tokens.navy, mb: 0.5 }}>
                   {card.scenario}
                 </Typography>
               )}
-
-              <Typography component="p" sx={{ fontWeight: 700 }}>
+              <Typography sx={{ fontWeight: 700, color: tokens.navy, mt: 1 }}>
                 {copy.card.whyHeading}
               </Typography>
-              <Typography component="p" gutterBottom>
-                {card.why}
-              </Typography>
-
-              <Typography component="p" sx={{ fontWeight: 700 }}>
+              <Typography sx={{ color: 'text.secondary' }}>{card.why}</Typography>
+              <Typography sx={{ fontWeight: 700, color: tokens.navy, mt: 1.5 }}>
                 {copy.card.nextHeading}
               </Typography>
-              <Typography component="p" gutterBottom>
-                {card.next_step}
-              </Typography>
-
-              <Link href={card.link.url}>{card.link.label}</Link>
-
-              <Typography
-                component="p"
-                variant="body2"
-                sx={{ mt: 1, color: 'text.secondary' }}
-              >
+              <Typography sx={{ color: 'text.secondary' }}>{card.next_step}</Typography>
+              <Box sx={{ mt: 1 }}>
+                <Link href={card.link.url}>{card.link.label} →</Link>
+              </Box>
+              <Typography sx={{ mt: 1, fontSize: 13, color: tokens.muted }}>
                 {copy.card.verifiedPrefix}: {card.verified}
               </Typography>
             </Box>
