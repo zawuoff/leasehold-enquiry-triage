@@ -42,7 +42,7 @@ export default function AppBar() {
       </Box>
       <Typography
         sx={{
-          color: tokens.muted,
+          color: tokens.strapline,
           fontSize: 13,
           fontWeight: 500,
           display: { xs: 'none', sm: 'block' },

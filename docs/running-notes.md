@@ -2388,3 +2388,27 @@ Ripple: removed the now-dead `topic` prop threading (`AdviserCallback` →
 empty submission accepted). The `/api/callback` endpoint and `postCallback`
 client remain as a wiring point for a future real callback, but the current UI no
 longer calls them. Frontend: 29 tests pass, build clean.
+
+## 2026-08-31 — Colour-contrast fix (accessibility-fix branch)
+
+Honest record: `vitest-axe` was green on every screen, but it can't verify
+contrast under jsdom (no rendered colour / `getContext` unimplemented), so a
+low-contrast token slipped through and shipped. Found by measuring ratios by hand.
+
+- **Failure:** `tokens.muted` `#7FA1B0` — 2.75:1 as small text on white (fails
+  1.4.3), 4.18:1 as the strapline on navy (fails 1.4.3), 2.75:1 as the unchecked
+  checkbox/radio border (fails 1.4.11). One token can't serve both grounds.
+- **Fix:** split it — `muted` → `#54737F` (5.08:1 on white, 4.82:1 on the page /
+  selected tint; used for all light-background text + control borders) and a new
+  `strapline` → `#93B2C0` (5.13:1 on navy, app-bar strapline only). AppBar switched
+  to `strapline`; the other 8 muted usages inherit the darker value.
+- **Full palette audit** (measured, not assumed): navy 10.9–11.5, slate 6.2–6.6,
+  white-on-navy 11.5, navy-on-cyan logo 6.84 (also `aria-hidden`) all pass. The
+  `#DDE2E9` container/card/stepper borders are 1.3:1 but are **decorative** (not
+  control-state indicators — the control borders and navy-fill selected state
+  carry state and meet 3:1), so 1.4.11 doesn't require them; left as-is and noted.
+- **Regression guard:** `theme.contrast.test.ts` computes the WCAG ratio for every
+  token pair we depend on and asserts text ≥ 4.5:1 and control borders ≥ 3:1, with
+  a comment explaining why axe/jsdom can't catch this. Frontend: 42 tests pass.
+- Documented honestly in hardening-notes and self-review (axe missed it; found
+  manually; test added) — not rewritten to imply it was caught first time.
