@@ -2302,3 +2302,32 @@ input via `aria-describedby` (verified by an axe test on the free-text screen).
 Placeholder approach **rejected** (disappears on typing, low contrast). These
 per-topic examples could later be shown contextually if free text ever becomes
 topic-scoped.
+
+### Stepper: keep the number + add a tick on completed steps
+
+Previously a completed step replaced its number with a check. Changed so a
+completed step **keeps its number and gains a small cyan tick badge** on the
+corner (tick-on-complete is a standard, recognisable pattern). Added a
+screen-reader-only "Completed" per done step for non-visual parity; the active
+step still uses `aria-current="step"`. Verified live on the result step: Describe
+and Your situation show number + tick + "Completed"; the active step has
+aria-current; upcoming steps show the number only.
+
+### Free-text "cleaner" design (Paper frame `94-0`)
+
+Implemented the user's Paper frame **"Variant A — Describe / free text (cleaner)"**
+to make the free-text step less text-heavy:
+
+- **Shorter privacy notice**, styled as a left-border inset (4px `#7FA1B0`):
+  "Do not include personal details — such as names, addresses or reference
+  numbers." + muted "Your description isn't saved to an account or enquiry
+  history." Replaces the long paragraph; still avoids over-claiming.
+- **Free-text-specific subtitle** ("Tell us what's happening in your own
+  words…"), swapped in when the free tab is active (guided keeps its own).
+- **Standalone bold field label** + a neutral **"Start typing here…" placeholder**
+  (label associated via `htmlFor`/`id`; placeholder carries no essential guidance).
+- Examples label trimmed "For example:" → "For example".
+
+Verified live: subtitle/privacy/label/placeholder/examples all match the frame;
+label `for` matches the textarea id and `aria-describedby` resolves to hint +
+examples (axe test on the free-text screen passes).
