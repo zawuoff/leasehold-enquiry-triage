@@ -71,7 +71,9 @@ information or a safe next action.
 
 **Technical, accessibility, privacy**
 - Explicit phrase/synonym rules are sufficient for three topics, provided weak,
-  negated, conflicting, and unsupported input falls back safely.
+  conflicting and unsupported input falls back safely. **Negation is not
+  detected** — a negated sentence containing a keyword still matches its topic
+  (a known limitation, not a safe fallback).
 - Plain language, focus management, and accessible announcements make the
   journey usable — but real assistive-technology and usability testing is still
   needed; unverified until done.
