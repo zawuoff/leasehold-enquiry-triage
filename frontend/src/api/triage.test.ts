@@ -3,21 +3,21 @@ import {
   getScenarios,
   postGuidedTriage,
   postFreeTextTriage,
+  postCallback,
+  postFeedback,
   TriageValidationError,
 } from './triage'
 
 afterEach(() => vi.unstubAllGlobals())
 
 describe('getScenarios', () => {
-  it('returns the scenarios array', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ scenarios: [{ id: 'a', label: 'A' }] }),
-      }),
-    )
-    expect(await getScenarios()).toEqual([{ id: 'a', label: 'A' }])
+  it('returns topics and scenarios', async () => {
+    const body = {
+      topics: [{ key: 'T', label: 'T label' }],
+      scenarios: [{ id: 'a', label: 'A', topic: 'T' }],
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => body }))
+    expect(await getScenarios()).toEqual(body)
   })
 
   it('throws when the response is not ok', async () => {
@@ -101,5 +101,51 @@ describe('postFreeTextTriage', () => {
       }),
     )
     await expect(postFreeTextTriage('')).rejects.toBeInstanceOf(TriageValidationError)
+  })
+})
+
+describe('postCallback / postFeedback', () => {
+  it('posts callback details and returns the acknowledgement', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ status: 'received' }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await postCallback({ name: 'Sam', email: 'sam@example.com' })).toEqual({
+      status: 'received',
+    })
+    const [url] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/callback')
+  })
+
+  it('throws TriageValidationError when callback validation fails', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { code: 'email_invalid', field: 'email' } }),
+      }),
+    )
+    await expect(
+      postCallback({ name: 'Sam', email: 'nope' }),
+    ).rejects.toBeInstanceOf(TriageValidationError)
+  })
+
+  it('posts feedback and returns the acknowledgement', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ status: 'received' }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await postFeedback({ helpful: true, comment: 'clear' })).toEqual({
+      status: 'received',
+    })
+    const [url] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/feedback')
   })
 })

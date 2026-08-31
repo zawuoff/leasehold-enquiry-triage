@@ -1,39 +1,40 @@
-# Todo — Free-text triage (ticket 6)
+# Todo — Stepper redesign (Paper "Variant A") + narrowing funnel
 
-Branch: `setup-freetext-triage`. No commits by assistant.
-Content source: docs/content.md (verbatim).
+Branch: `harden-verify-document`. No commits by assistant.
+Design source: Paper frame K-0 (navy/cyan, DM Sans, horizontal stepper).
 
 ## Backend
-- [x] `content.py` — FREE_TEXT_CARDS + FALLBACK + TOPIC_ORDER (from content.md)
-- [x] `domain.py` — KEYWORDS, `validate_free_text`, `classify_free_text` (≤2 topics / fallback)
-- [x] `views.py` — dispatch guided vs free_text by mode
-- [x] backend tests — validation, classifier (incl. misspelling/negation edge cases), endpoints → 34 pass
+- [x] `views.scenarios` — per-scenario `topic` + `topics` list; updated test
 
-## Frontend
-- [x] `content.ts` — free-text screen copy, fallback actions, `blank_text`/`text_too_long`
-- [x] `api/triage.ts` — `postFreeTextTriage`, fallback + optional-card types
-- [x] `FreeTextEntry`, `Fallback`; picker "I’m not sure" route; TriageResults handles free-text cards
-- [x] App step machine picker→freetext→results/fallback + recovery actions
-- [x] frontend tests (guided + free-text + fallback + a11y) → 21 pass
+## Frontend — theme + shell
+- [x] `index.html` DM Sans; `theme.ts`; `main.tsx` ThemeProvider
+- [x] `AppBar`, `JourneyStepper`, `StepCard`, `icons`, `OptionRow`
 
-## Verify
-- [x] backend tests + check; frontend tests + build; live e2e (match / overlap / fallback / blank)
-- [ ] User commits + opens PR (assistant provides PR description only)
+## Frontend — wizard (narrowing funnel + free-text tab)
+- [x] `DescribeStep` (tab toggle: Pick a topic / Describe in your own words)
+- [x] `SituationStep` (guided: narrowed to the topic's scenarios, up-to-2)
+- [x] Free-text tab submits straight to result (stepper drops "Details")
+- [x] `ResultStep`, `NextStepsStep`, `FeedbackStep` (interactive/instant ack)
+- [x] `App` phase machine + dynamic stepper (guided 5-node / free 4-node)
+
+## Tests + verify
+- [x] rewrote frontend tests for the funnel + axe → 21 pass
+- [x] backend 45 + check; frontend build clean; live browser walk-through
 
 ## Review
 
-- **What shipped:** free-text triage. A deterministic keyword classifier
-  (`domain.KEYWORDS`) maps a description to up to two topics, or the approved
-  safe fallback. Reached via the picker's "I'm not sure / something else" route
-  (mutually exclusive with scenarios). Free-text results reuse the topic-card UI
-  (no scenario_id); the fallback offers Edit description / Choose from common
-  scenarios / Contact LEASE. Privacy notice + 1,000-char cap on entry.
-- **Verified:** backend 34 tests (no DB); frontend 21 tests (incl. axe on
-  picker/results/free-text); build clean; live e2e — match, two-topic overlap,
-  fallback, blank→400.
-- **Deliberate limitations (documented + `ponytail:` comment):** naive substring
-  matching — misspellings and negated phrases fall to the safe fallback rather
-  than mis-signposting. All free-text copy is verbatim from content.md (no new
-  draft strings; the two picker DRAFT strings from ticket 5 remain).
-- **Out of scope:** Back/retry/"this doesn't match" polish (ticket 7), adviser
-  callback + feedback, park homes.
+- **What shipped:** the guided journey is a 5-step **narrowing funnel** styled to
+  Paper "Variant A" — navy app bar, horizontal stepper (Topic → Details → Result →
+  Next steps → Feedback), a white card per step, DM Sans + the exact palette.
+  Topic step picks a broad area (or "Something else" → free text); Details narrows
+  to that topic's scenarios (up to 2); then result, optional contact, and an
+  interactive/less-pushy feedback step.
+- **Verified:** backend 45 tests + check; frontend 21 tests (incl. axe on topic +
+  result); build clean; walked the funnel in the browser (Topic → narrowed
+  Situation → Result → Next steps → Feedback → instant ack).
+- **Notes:** all new UI chrome is `// DRAFT` (logged in running-notes); triage/
+  result copy stays verbatim from content.md; classifier unchanged. Automation
+  clicks were flaky under the scaled preview, but the flow is proven by tests +
+  JS-driven walkthrough.
+- **Follow-ups:** promote DRAFT copy into content.md once confirmed; Part 3
+  reflective notes still outstanding.

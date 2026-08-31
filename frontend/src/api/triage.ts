@@ -1,6 +1,17 @@
 export interface Scenario {
   id: string
   label: string
+  topic: string
+}
+
+export interface Topic {
+  key: string
+  label: string
+}
+
+export interface ScenariosResponse {
+  topics: Topic[]
+  scenarios: Scenario[]
 }
 
 export interface TriageLink {
@@ -58,17 +69,16 @@ export class TriageValidationError extends Error {
   }
 }
 
-export async function getScenarios(): Promise<Scenario[]> {
+export async function getScenarios(): Promise<ScenariosResponse> {
   const response = await fetch('/api/scenarios')
   if (!response.ok) {
     throw new Error(`Scenarios request failed (${response.status})`)
   }
-  const body = (await response.json()) as { scenarios: Scenario[] }
-  return body.scenarios
+  return (await response.json()) as ScenariosResponse
 }
 
-async function submitTriage(payload: unknown): Promise<TriageResult> {
-  const response = await fetch('/api/triage', {
+async function postJson<T>(url: string, payload: unknown): Promise<T> {
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -80,15 +90,44 @@ async function submitTriage(payload: unknown): Promise<TriageResult> {
     throw new TriageValidationError(error.code, error.field ?? null)
   }
   if (!response.ok) {
-    throw new Error(`Triage request failed (${response.status})`)
+    throw new Error(`Request failed (${response.status})`)
   }
-  return (await response.json()) as TriageResult
+  return (await response.json()) as T
 }
 
 export function postGuidedTriage(scenarioIds: string[]): Promise<TriageResult> {
-  return submitTriage({ mode: 'guided', scenario_ids: scenarioIds })
+  return postJson<TriageResult>('/api/triage', {
+    mode: 'guided',
+    scenario_ids: scenarioIds,
+  })
 }
 
 export function postFreeTextTriage(freeText: string): Promise<TriageResult> {
-  return submitTriage({ mode: 'free_text', free_text: freeText })
+  return postJson<TriageResult>('/api/triage', {
+    mode: 'free_text',
+    free_text: freeText,
+  })
+}
+
+export interface Acknowledgement {
+  status: string
+}
+
+export interface CallbackRequest {
+  name: string
+  email: string
+  topic?: string
+}
+
+export interface FeedbackRequest {
+  helpful: boolean
+  comment?: string
+}
+
+export function postCallback(request: CallbackRequest): Promise<Acknowledgement> {
+  return postJson<Acknowledgement>('/api/callback', request)
+}
+
+export function postFeedback(request: FeedbackRequest): Promise<Acknowledgement> {
+  return postJson<Acknowledgement>('/api/feedback', request)
 }

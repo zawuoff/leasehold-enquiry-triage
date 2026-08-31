@@ -2164,3 +2164,104 @@ These need confirmation and, once agreed, should be promoted into `content.md`
   still enforces `text_too_long` for API robustness.
 - All ticket-6 user-facing copy is verbatim from content.md — no new draft
   strings (the two picker DRAFT strings from ticket 5 still await confirmation).
+
+## 2026-08-31 — Harden/verify/document built (tickets 7 + 8 + 9)
+
+### What was built
+
+- Results/navigation: Back on the free-text step; "Change your answers" returns
+  to the origin input step with input preserved (guided selection lifted into
+  App; free text already preserved). Fallback keeps Edit / Choose scenarios.
+- Adviser callback (`POST /api/callback`) and feedback (`POST /api/feedback`):
+  validated + acknowledged, **never stored** (no models, no logging). Shown after
+  both results and fallback via a shared `ResultActions` (Contact LEASE link +
+  callback + feedback).
+- README rewritten (run, architecture, endpoints, tests, accessibility, personal
+  data & security, deliberate omissions).
+- Verification: no console.log / localStorage / cookies; no enquiry text or PII
+  in URLs; Django server log carries no request bodies; `models.py` empty.
+
+### Draft copy introduced (NOT yet in content.md)
+
+content.md has no callback/feedback copy. New strings in `src/content.ts` marked
+`// DRAFT`, to confirm and promote later:
+
+- `results.changeAnswers` = "Change your answers".
+- Callback: heading "Ask an adviser to contact you", intro, "Your name",
+  "Your email address", "Request a callback", success ack.
+- Feedback: "Was this helpful?", "Yes"/"No", optional-comment label,
+  "Send feedback", "Thanks for your feedback."
+- Validation messages: `name_required`, `email_invalid`, `helpful_required`.
+
+Approved copy reused unchanged: results "Contact LEASE" + get-in-touch URL, the
+free-text "Back" label. The two ticket-5 picker DRAFT strings still stand.
+
+### Decisions
+
+- Contact on results is the verified "Get in touch" link only — no invented
+  phone/email for LEASE.
+- Part 3 reflective notes (personal-data / accessibility / self-review) are
+  deferred; README covers the essentials.
+
+## 2026-08-31 — Redesigned the journey as a stepper (Paper "Variant A")
+
+### What changed
+
+- The flat one-shot picker became a **4-step wizard** (Describe → Result → Next
+  steps → Feedback) matching the Paper frame **"Variant A — Clarity (horizontal
+  stepper)"** (file "Lease test", artboard K-0). App bar + horizontal stepper +
+  a white card per step. Contact + feedback are now steps, not always-on forms.
+- Design tokens taken from the frame into a MUI theme (`src/theme.ts`): navy
+  `#003A6D`, cyan `#77D5EA`, slate `#45607A`, muted `#7FA1B0`, border `#DDE2E9`,
+  page `#F9F9F8`; **DM Sans** via Google Fonts. New components: `AppBar`,
+  `JourneyStepper`, `StepCard`, `steps/*`, `icons`. Retired `ScenarioPicker`,
+  `FreeTextEntry`, `Fallback`, `ResultActions`, standalone `Feedback`.
+- Backend `GET /api/scenarios` now returns `topics` + per-scenario `topic` so
+  rows can show topic tags (classifier unchanged).
+- Feedback is now interactive + less pushy: Yes/No acknowledges instantly and the
+  optional comment appears only after choosing.
+
+### Decisions
+
+- Followed Variant A's **flat common-problems list with a guided/free-text
+  toggle** — this supersedes the earlier "topic-first narrowing" idea.
+- Verified the running app against the frame via the accessibility tree (the
+  screenshot pane wasn't displayable); structure + exact CSS tokens match.
+
+### New draft copy (NOT yet in content.md)
+
+UI chrome from the frame / wizard, all marked `// DRAFT` in `src/content.ts`, to
+confirm and promote later: brand "Leasehold Advisory Service" + strapline
+"Signposting · not legal advice"; the four stepper labels + sublabels; Describe
+heading/subtitle, the two toggle labels, "Common problems"; step headings "Your
+result" / "Your next steps" / done message; nav labels (Back / Continue / Skip /
+Start again). All triage/result/fallback/validation copy remains verbatim from
+content.md.
+
+### Follow-up — added a narrowing funnel (still Variant A visuals)
+
+On request, the single "Describe" step became a two-step **narrowing funnel**
+before the result, so the wizard is now **5 steps**: Topic → Details → Result →
+Next steps → Feedback.
+
+- **Topic** (broad): single-select radio rows — the 3 topics + "Something else /
+  describe it in my own words".
+- **Details** (specific): if a topic was chosen, checkbox rows for *only that
+  topic's* scenarios (up to 2); if "Something else", the free-text box.
+- Replaced the guided/free-text toggle with the Topic step's "Something else"
+  route. New components: `OptionRow`, `steps/TopicStep`, `steps/SituationStep`,
+  `steps/FreeTextStep`; retired `DescribeStep`. Draft copy added: Topic/Situation
+  headings + subtitle + "Something else" label (`// DRAFT` in content.ts).
+- Verified: backend 45, frontend 21 (incl. axe on topic + result); build clean;
+  drove Topic → Details (narrowed to the topic's scenarios) in the browser.
+
+### Follow-up — free text as a tab, not a step
+
+Reworked the first step so "Describe in your own words" is a **tab** on the
+Describe card (guided/free toggle, like the frame), not a radio that leads to a
+separate step. The free-text tab submits **straight to the result** — the stepper
+drops the "Details" node on that path (Describe → Result → Next steps → Feedback),
+while the guided path keeps it (Describe → Details → Result → …). Merged
+`TopicStep` + `FreeTextStep` back into a single `DescribeStep` with the toggle;
+the stepper is now assembled per mode. Verified live: toggling to free text drops
+Details and a free-text submit lands directly on "Your result".

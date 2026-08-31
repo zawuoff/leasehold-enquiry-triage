@@ -1,36 +1,57 @@
-import { useEffect, useState } from 'react'
-import Container from '@mui/material/Container'
+import { useEffect, useMemo, useState } from 'react'
+import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import ScenarioPicker from './components/ScenarioPicker'
-import FreeTextEntry from './components/FreeTextEntry'
-import TriageResults from './components/TriageResults'
-import Fallback from './components/Fallback'
+import AppBar from './components/AppBar'
+import JourneyStepper from './components/JourneyStepper'
+import StepCard from './components/StepCard'
+import DescribeStep, { type DescribeMode } from './components/steps/DescribeStep'
+import SituationStep from './components/steps/SituationStep'
+import ResultStep from './components/steps/ResultStep'
+import NextStepsStep from './components/steps/NextStepsStep'
+import FeedbackStep from './components/steps/FeedbackStep'
 import ServiceError from './components/ServiceError'
 import { copy } from './content'
+import { tokens } from './theme'
 import {
   getScenarios,
   postGuidedTriage,
   postFreeTextTriage,
   TriageValidationError,
   type Scenario,
-  type TriageFallback,
+  type Topic,
   type TriageResult,
-  type TriageTopic,
 } from './api/triage'
 
-type Step = 'picker' | 'freetext' | 'results' | 'fallback'
+type Phase = 'describe' | 'situation' | 'result' | 'nextsteps' | 'feedback' | 'done'
 type LastRequest =
   | { kind: 'load' }
   | { kind: 'guided'; ids: string[] }
   | { kind: 'freetext'; text: string }
 
+// The stepper drops "Details" on the free-text path.
+function stepperFor(mode: DescribeMode) {
+  const s = copy.steps
+  const nodes =
+    mode === 'free'
+      ? [s.describe, s.result, s.nextSteps, s.feedback]
+      : [s.describe, s.details, s.result, s.nextSteps, s.feedback]
+  const order: Phase[] =
+    mode === 'free'
+      ? ['describe', 'result', 'nextsteps', 'feedback', 'done']
+      : ['describe', 'situation', 'result', 'nextsteps', 'feedback', 'done']
+  return { nodes, order }
+}
+
 function App() {
   const [scenarios, setScenarios] = useState<Scenario[] | null>(null)
-  const [step, setStep] = useState<Step>('picker')
-  const [topics, setTopics] = useState<TriageTopic[]>([])
-  const [fallback, setFallback] = useState<TriageFallback | null>(null)
+  const [topics, setTopics] = useState<Topic[]>([])
+  const [phase, setPhase] = useState<Phase>('describe')
+  const [mode, setMode] = useState<DescribeMode>('guided')
+  const [selectedTopic, setSelectedTopic] = useState('')
+  const [scenarioIds, setScenarioIds] = useState<string[]>([])
   const [freeText, setFreeText] = useState('')
-  const [validationMessage, setValidationMessage] = useState<string | null>(null)
+  const [result, setResult] = useState<TriageResult | null>(null)
+  const [detailsError, setDetailsError] = useState<string | null>(null)
   const [serviceError, setServiceError] = useState(false)
   const [loading, setLoading] = useState(false)
   const [lastRequest, setLastRequest] = useState<LastRequest>({ kind: 'load' })
@@ -43,34 +64,25 @@ function App() {
     setServiceError(false)
     setLastRequest({ kind: 'load' })
     try {
-      setScenarios(await getScenarios())
+      const data = await getScenarios()
+      setScenarios(data.scenarios)
+      setTopics(data.topics)
     } catch {
       setServiceError(true)
     }
   }
 
-  async function runTriage(
-    request: LastRequest,
-    call: () => Promise<TriageResult>,
-  ) {
+  async function runTriage(request: LastRequest, call: () => Promise<TriageResult>) {
     setLoading(true)
-    setValidationMessage(null)
+    setDetailsError(null)
     setServiceError(false)
     setLastRequest(request)
     try {
-      const result = await call()
-      if (result.outcome === 'fallback' && result.fallback) {
-        setFallback(result.fallback)
-        setStep('fallback')
-      } else {
-        setTopics(result.topics ?? [])
-        setStep('results')
-      }
+      setResult(await call())
+      setPhase('result')
     } catch (error) {
       if (error instanceof TriageValidationError) {
-        setValidationMessage(
-          copy.validation[error.code] ?? copy.validation.invalid_request,
-        )
+        setDetailsError(copy.validation[error.code] ?? copy.validation.invalid_request)
       } else {
         setServiceError(true)
       }
@@ -80,6 +92,7 @@ function App() {
   }
 
   function submitGuided(ids: string[]) {
+    setScenarioIds(ids)
     void runTriage({ kind: 'guided', ids }, () => postGuidedTriage(ids))
   }
 
@@ -88,54 +101,99 @@ function App() {
     void runTriage({ kind: 'freetext', text }, () => postFreeTextTriage(text))
   }
 
-  function chooseFreeText() {
-    setValidationMessage(null)
-    setServiceError(false)
-    setStep('freetext')
-  }
-
   function retry() {
     if (lastRequest.kind === 'guided') submitGuided(lastRequest.ids)
     else if (lastRequest.kind === 'freetext') submitFreeText(lastRequest.text)
     else void loadScenarios()
   }
 
+  function startAgain() {
+    setPhase('describe')
+    setMode('guided')
+    setSelectedTopic('')
+    setScenarioIds([])
+    setFreeText('')
+    setResult(null)
+    setDetailsError(null)
+  }
+
+  const { nodes, order } = stepperFor(mode)
+  const activeStep = Math.max(0, order.indexOf(phase))
+  const topicScenarios = useMemo(
+    () => (scenarios ?? []).filter((s) => s.topic === selectedTopic),
+    [scenarios, selectedTopic],
+  )
+  const topicLabel = useMemo(() => result?.topics?.[0]?.label, [result])
+  // After a result, Back returns to the originating input step.
+  const resultBackPhase: Phase = mode === 'free' ? 'describe' : 'situation'
+
   let content
   if (serviceError) {
     content = <ServiceError onRetry={retry} retrying={loading} />
-  } else if (step === 'results') {
-    content = <TriageResults topics={topics} />
-  } else if (step === 'fallback' && fallback) {
+  } else if (phase === 'done') {
     content = (
-      <Fallback
-        fallback={fallback}
-        onEdit={() => {
-          setValidationMessage(null)
-          setStep('freetext')
-        }}
-        onChooseScenarios={() => {
-          setValidationMessage(null)
-          setStep('picker')
-        }}
+      <StepCard
+        title={copy.stepHeadings.done}
+        onContinue={startAgain}
+        continueLabel={copy.nav.startAgain}
+      >
+        <Typography sx={{ color: 'text.secondary' }}>
+          You can start a new enquiry at any time.
+        </Typography>
+      </StepCard>
+    )
+  } else if (phase === 'feedback') {
+    content = (
+      <FeedbackStep onBack={() => setPhase('nextsteps')} onFinish={() => setPhase('done')} />
+    )
+  } else if (phase === 'nextsteps') {
+    content = (
+      <NextStepsStep
+        topicLabel={topicLabel}
+        onBack={() => setPhase('result')}
+        onContinue={() => setPhase('feedback')}
       />
     )
-  } else if (step === 'freetext') {
+  } else if (phase === 'result' && result) {
     content = (
-      <FreeTextEntry
-        initialText={freeText}
-        onSubmit={submitFreeText}
+      <ResultStep
+        result={result}
+        onBack={() => {
+          setDetailsError(null)
+          setPhase(resultBackPhase)
+        }}
+        onContinue={() => setPhase('nextsteps')}
+      />
+    )
+  } else if (phase === 'situation') {
+    content = (
+      <SituationStep
+        scenarios={topicScenarios}
+        initialSelected={scenarioIds}
         loading={loading}
-        errorMessage={validationMessage}
+        errorMessage={detailsError}
+        onBack={() => {
+          setDetailsError(null)
+          setPhase('describe')
+        }}
+        onSubmit={submitGuided}
       />
     )
   } else if (scenarios) {
     content = (
-      <ScenarioPicker
-        scenarios={scenarios}
-        onSubmit={submitGuided}
-        onChooseFreeText={chooseFreeText}
+      <DescribeStep
+        topics={topics}
+        initialMode={mode}
+        initialTopic={selectedTopic}
+        initialText={freeText}
         loading={loading}
-        errorMessage={validationMessage}
+        errorMessage={detailsError}
+        onModeChange={setMode}
+        onPickTopic={(key) => {
+          setSelectedTopic(key)
+          setPhase('situation')
+        }}
+        onSubmitFree={submitFreeText}
       />
     )
   } else {
@@ -143,17 +201,13 @@ function App() {
   }
 
   return (
-    <Container component="main" maxWidth="sm" sx={{ py: 6 }}>
-      <Typography
-        variant="h1"
-        component="h1"
-        gutterBottom
-        sx={{ fontSize: '2rem' }}
-      >
-        {copy.appTitle}
-      </Typography>
-      {content}
-    </Container>
+    <Box sx={{ minHeight: '100vh', bgcolor: tokens.page }}>
+      <AppBar />
+      <Box component="main" sx={{ maxWidth: 960, mx: 'auto', px: 2, py: { xs: 4, sm: 6 } }}>
+        <JourneyStepper steps={nodes} activeStep={activeStep} />
+        <Box sx={{ mt: { xs: 4, sm: 6 } }}>{content}</Box>
+      </Box>
+    </Box>
   )
 }
 

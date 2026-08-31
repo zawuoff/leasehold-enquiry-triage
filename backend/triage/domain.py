@@ -4,6 +4,8 @@ Validation error codes match docs/content.md (the frontend maps them to the
 approved user-facing messages).
 """
 
+import re
+
 from . import content
 
 
@@ -183,3 +185,61 @@ def classify_free_text(text):
         )
 
     return {"outcome": "matched", "topics": topics}
+
+
+# --- Adviser callback and feedback (validated, acknowledged, never stored) ---
+
+# ponytail: simple email shape check — good enough for a prototype form, not
+# RFC-5322. Upgrade to a real validator if this ever accepts stored addresses.
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MAX_NAME_LENGTH = 100
+MAX_COMMENT_LENGTH = 1000
+
+
+def validate_callback(payload):
+    """Validate an adviser-callback request. Returns a normalised dict.
+
+    The result is intentionally discarded by the view — nothing is stored.
+    """
+    if not isinstance(payload, dict):
+        raise TriageError("invalid_request")
+
+    name = payload.get("name")
+    if not isinstance(name, str) or not name.strip():
+        raise TriageError("name_required", "name")
+    if len(name) > MAX_NAME_LENGTH:
+        raise TriageError("invalid_request", "name")
+
+    email = payload.get("email")
+    if not isinstance(email, str) or not EMAIL_RE.match(email.strip()):
+        raise TriageError("email_invalid", "email")
+
+    topic = payload.get("topic")
+    if topic is not None and not isinstance(topic, str):
+        raise TriageError("invalid_request", "topic")
+
+    return {
+        "name": name.strip(),
+        "email": email.strip(),
+        "topic": topic.strip() if isinstance(topic, str) else None,
+    }
+
+
+def validate_feedback(payload):
+    """Validate a feedback request. Returns a normalised dict (never stored)."""
+    if not isinstance(payload, dict):
+        raise TriageError("invalid_request")
+
+    helpful = payload.get("helpful")
+    if not isinstance(helpful, bool):
+        raise TriageError("helpful_required", "helpful")
+
+    comment = payload.get("comment")
+    if comment is not None:
+        if not isinstance(comment, str):
+            raise TriageError("invalid_request", "comment")
+        if len(comment) > MAX_COMMENT_LENGTH:
+            raise TriageError("text_too_long", "comment")
+
+    normalised_comment = comment.strip() if isinstance(comment, str) else ""
+    return {"helpful": helpful, "comment": normalised_comment or None}

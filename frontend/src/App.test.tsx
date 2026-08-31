@@ -1,46 +1,25 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { ThemeProvider } from '@mui/material/styles'
 import { axe } from 'vitest-axe'
 import App from './App'
+import theme from './theme'
 
-const SCENARIOS = [
-  { id: 'service-charge-major-works', label: 'Service charge or major works bill' },
-  { id: 'ground-rent-demand', label: 'Ground rent demand' },
-  { id: 'lease-extension', label: 'Extend my lease' },
+const TOPICS = [
+  { key: 'COSTS_AND_CHARGES', label: 'Costs and charges' },
+  { key: 'REPAIRS_AND_BUILDING_MANAGEMENT', label: 'Repairs and building management' },
+  { key: 'LEASE_EXTENSION', label: 'Lease extension' },
 ]
 
-const COSTS_RESULT = {
-  outcome: 'matched',
-  topics: [
-    {
-      topic: 'COSTS_AND_CHARGES',
-      label: 'Costs and charges',
-      heading: 'This may relate to costs and charges.',
-      warning: { text: 'Urgent warning text', source: '', verified: '30 August 2026' },
-      cards: [
-        {
-          scenario_id: 'service-charge-major-works',
-          scenario: 'Service charge bill',
-          why: 'why one',
-          next_step: 'next one',
-          link: { label: 'Read costs and charges guidance', url: 'https://example.test/1' },
-          verified: '30 August 2026',
-        },
-        {
-          scenario_id: 'ground-rent-demand',
-          scenario: 'Ground rent demand',
-          why: 'why two',
-          next_step: 'next two',
-          link: { label: 'Read costs and charges guidance', url: 'https://example.test/2' },
-          verified: '30 August 2026',
-        },
-      ],
-    },
-  ],
-}
+const SCENARIOS = [
+  { id: 'service-charge', label: 'My service charge bill', topic: 'COSTS_AND_CHARGES' },
+  { id: 'ground-rent', label: 'My ground rent demand', topic: 'COSTS_AND_CHARGES' },
+  { id: 'major-works', label: 'A major works bill', topic: 'COSTS_AND_CHARGES' },
+  { id: 'lease-extension', label: 'Extend my lease', topic: 'LEASE_EXTENSION' },
+]
 
-const FREETEXT_MATCH = {
+const MATCHED = {
   outcome: 'matched',
   topics: [
     {
@@ -50,9 +29,11 @@ const FREETEXT_MATCH = {
       warning: null,
       cards: [
         {
-          why: 'free text why',
-          next_step: 'free text next',
-          link: { label: 'Read costs and charges guidance', url: 'https://example.test/c' },
+          scenario_id: 'service-charge',
+          scenario: 'My service charge bill',
+          why: 'why one',
+          next_step: 'next one',
+          link: { label: 'Read costs and charges guidance', url: 'https://example.test/1' },
           verified: '30 August 2026',
         },
       ],
@@ -75,213 +56,166 @@ function jsonResponse(body: unknown, { ok = true, status = 200 } = {}) {
   return { ok, status, json: async () => body }
 }
 
-// Routes fetch by URL; `triage` returns the response for POST /api/triage.
-function installFetch(triage: () => unknown) {
+function installFetch(triage: () => unknown, opts: { callback?: () => unknown } = {}) {
+  const ack = () => jsonResponse({ status: 'received' })
   const fetchMock = vi.fn(async (url: string) => {
     if (String(url).endsWith('/api/scenarios')) {
-      return jsonResponse({ scenarios: SCENARIOS })
+      return jsonResponse({ topics: TOPICS, scenarios: SCENARIOS })
     }
-    if (String(url).endsWith('/api/triage')) {
-      return triage()
-    }
+    if (String(url).endsWith('/api/triage')) return triage()
+    if (String(url).endsWith('/api/callback')) return (opts.callback ?? ack)()
+    if (String(url).endsWith('/api/feedback')) return ack()
     throw new Error(`unexpected url ${url}`)
   })
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
 }
 
+function renderApp() {
+  return render(
+    <ThemeProvider theme={theme}>
+      <App />
+    </ThemeProvider>,
+  )
+}
+
+const continueBtn = () => screen.getByRole('button', { name: /continue/i })
+
+async function chooseTopic(user: ReturnType<typeof userEvent.setup>, name: RegExp) {
+  await user.click(await screen.findByRole('radio', { name }))
+  await user.click(continueBtn())
+}
+
+async function gotoResult(user: ReturnType<typeof userEvent.setup>) {
+  await chooseTopic(user, /costs and charges/i)
+  await user.click(await screen.findByRole('checkbox', { name: /my service charge bill/i }))
+  await user.click(continueBtn())
+  await screen.findByRole('heading', { name: /your result/i })
+}
+
 afterEach(() => vi.unstubAllGlobals())
 
-describe('App guided journey', () => {
-  it('renders the h1 and loads the scenario options', async () => {
-    installFetch(() => jsonResponse(COSTS_RESULT))
-    render(<App />)
+describe('describe step', () => {
+  it('renders the app bar, toggle and topic options', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    renderApp()
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Leasehold enquiry triage',
+      'Leasehold Advisory Service',
     )
+    expect(await screen.findByRole('radio', { name: /costs and charges/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /describe your problem/i })).toBeInTheDocument()
     expect(
-      await screen.findByLabelText('Service charge or major works bill'),
+      screen.getByRole('button', { name: /describe in your own words/i }),
     ).toBeInTheDocument()
-  })
-
-  it('submits selected scenarios and renders topic cards + shared warning', async () => {
-    installFetch(() => jsonResponse(COSTS_RESULT))
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.click(
-      await screen.findByLabelText('Service charge or major works bill'),
-    )
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
-
-    expect(
-      await screen.findByRole('heading', {
-        name: /this may relate to costs and charges/i,
-      }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('why one')).toBeInTheDocument()
-    expect(screen.getByText('why two')).toBeInTheDocument()
-    expect(screen.getByText('Urgent warning text')).toBeInTheDocument()
-  })
-
-  it('enforces a maximum of two selections', async () => {
-    installFetch(() => jsonResponse(COSTS_RESULT))
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.click(
-      await screen.findByLabelText('Service charge or major works bill'),
-    )
-    await user.click(screen.getByLabelText('Ground rent demand'))
-
-    expect(screen.getByLabelText('Extend my lease')).toBeDisabled()
-  })
-
-  it('shows the error summary on a validation failure', async () => {
-    installFetch(() =>
-      jsonResponse(
-        { error: { code: 'invalid_scenario_count', field: 'scenario_ids' } },
-        { ok: false, status: 400 },
-      ),
-    )
-    const user = userEvent.setup()
-    render(<App />)
-
-    await screen.findByLabelText('Service charge or major works bill')
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
-
-    expect(await screen.findByText('Check your answers')).toBeInTheDocument()
-    expect(screen.getByText('Select one or two scenarios.')).toBeInTheDocument()
-  })
-
-  it('shows a service error when the request fails', async () => {
-    installFetch(() => jsonResponse(null, { ok: false, status: 500 }))
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.click(
-      await screen.findByLabelText('Service charge or major works bill'),
-    )
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
-
-    expect(
-      await screen.findByRole('heading', { name: /could not check your enquiry/i }),
-    ).toBeInTheDocument()
-  })
-
-  it('has no axe violations on the picker', async () => {
-    installFetch(() => jsonResponse(COSTS_RESULT))
-    const { container } = render(<App />)
-    await screen.findByLabelText('Service charge or major works bill')
-    expect(await axe(container)).toHaveNoViolations()
-  })
-
-  it('has no axe violations on the results', async () => {
-    installFetch(() => jsonResponse(COSTS_RESULT))
-    const user = userEvent.setup()
-    const { container } = render(<App />)
-    await user.click(
-      await screen.findByLabelText('Service charge or major works bill'),
-    )
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
-    await screen.findByRole('heading', {
-      name: /this may relate to costs and charges/i,
-    })
-    expect(await axe(container)).toHaveNoViolations()
   })
 })
 
-describe('App free-text journey', () => {
-  async function gotoFreeText(user: ReturnType<typeof userEvent.setup>) {
-    await user.click(await screen.findByLabelText(/not sure/i))
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
-    return screen.findByRole('heading', {
-      name: /before you describe your situation/i,
-    })
-  }
-
-  it('routes “I’m not sure” to the free-text screen', async () => {
-    installFetch(() => jsonResponse(FREETEXT_MATCH))
+describe('situation step', () => {
+  it('narrows to the chosen topic and enforces two selections', async () => {
+    installFetch(() => jsonResponse(MATCHED))
     const user = userEvent.setup()
-    render(<App />)
-    await gotoFreeText(user)
-    expect(screen.getByLabelText('Describe your situation')).toBeInTheDocument()
+    renderApp()
+    await chooseTopic(user, /costs and charges/i)
+    await user.click(await screen.findByRole('checkbox', { name: /my service charge bill/i }))
+    await user.click(screen.getByRole('checkbox', { name: /my ground rent demand/i }))
+    expect(screen.getByRole('checkbox', { name: /a major works bill/i })).toBeDisabled()
+    // a lease-extension scenario is a different topic, so it is not shown here
+    expect(screen.queryByRole('checkbox', { name: /extend my lease/i })).toBeNull()
+  })
+})
+
+describe('journey', () => {
+  it('guided selection advances to the result step', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    renderApp()
+    await gotoResult(user)
+    expect(screen.getByText('why one')).toBeInTheDocument()
   })
 
-  it('submits free text and renders matched topic cards', async () => {
-    installFetch(() => jsonResponse(FREETEXT_MATCH))
-    const user = userEvent.setup()
-    render(<App />)
-    await gotoFreeText(user)
-    await user.type(
-      screen.getByLabelText('Describe your situation'),
-      'service charge too high',
-    )
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
-    expect(
-      await screen.findByRole('heading', {
-        name: /this may relate to costs and charges/i,
-      }),
-    ).toBeInTheDocument()
-    expect(screen.getByText('free text why')).toBeInTheDocument()
-  })
-
-  it('shows the fallback with recovery actions when nothing matches', async () => {
+  it('free-text tab goes straight to the result (no details step)', async () => {
     installFetch(() => jsonResponse(FALLBACK))
     const user = userEvent.setup()
-    render(<App />)
-    await gotoFreeText(user)
-    await user.type(
-      screen.getByLabelText('Describe your situation'),
-      'the weather is nice',
-    )
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
+    renderApp()
+    await screen.findByRole('radio', { name: /costs and charges/i })
+    await user.click(screen.getByRole('button', { name: /describe in your own words/i }))
+    await user.type(screen.getByLabelText('Describe your situation'), 'the weather')
+    await user.click(continueBtn())
     expect(
       await screen.findByRole('heading', { name: /could not match your question/i }),
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /choose from common scenarios/i }),
-    ).toBeInTheDocument()
   })
 
-  it('returns from the fallback to the scenario picker', async () => {
-    installFetch(() => jsonResponse(FALLBACK))
+  it('walks result → next steps → feedback and acknowledges instantly', async () => {
+    installFetch(() => jsonResponse(MATCHED))
     const user = userEvent.setup()
-    render(<App />)
-    await gotoFreeText(user)
-    await user.type(screen.getByLabelText('Describe your situation'), 'nonsense')
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
-    await screen.findByRole('heading', { name: /could not match your question/i })
-    await user.click(
-      screen.getByRole('button', { name: /choose from common scenarios/i }),
-    )
-    expect(
-      await screen.findByLabelText('Service charge or major works bill'),
-    ).toBeInTheDocument()
+    renderApp()
+    await gotoResult(user)
+    await user.click(continueBtn()) // -> next steps
+    await screen.findByRole('heading', { name: /your next steps/i })
+    await user.click(continueBtn()) // -> feedback
+    await screen.findByRole('heading', { name: /was this helpful/i })
+    await user.click(screen.getByRole('button', { name: /^yes$/i }))
+    expect(await screen.findByText('Thanks for your feedback.')).toBeInTheDocument()
   })
 
-  it('shows a validation error for blank free text', async () => {
-    installFetch(() =>
-      jsonResponse(
-        { error: { code: 'blank_text', field: 'free_text' } },
-        { ok: false, status: 400 },
-      ),
-    )
+  it('preserves the situation selection when going Back from the result', async () => {
+    installFetch(() => jsonResponse(MATCHED))
     const user = userEvent.setup()
-    render(<App />)
-    await gotoFreeText(user)
-    await user.click(screen.getByRole('button', { name: /show relevant guidance/i }))
-    expect(await screen.findByText('Check your answers')).toBeInTheDocument()
+    renderApp()
+    await gotoResult(user)
+    await user.click(screen.getByRole('button', { name: /back/i }))
     expect(
-      screen.getByText('Describe your situation before continuing.'),
-    ).toBeInTheDocument()
+      await screen.findByRole('checkbox', { name: /my service charge bill/i }),
+    ).toBeChecked()
+  })
+})
+
+describe('adviser callback', () => {
+  it('submits and shows acknowledgement', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    renderApp()
+    await gotoResult(user)
+    await user.click(continueBtn())
+    await user.type(screen.getByLabelText('Your name'), 'Sam')
+    await user.type(screen.getByLabelText('Your email address'), 'sam@example.com')
+    await user.click(screen.getByRole('button', { name: /request a callback/i }))
+    expect(await screen.findByText(/an adviser can follow up/i)).toBeInTheDocument()
   })
 
-  it('has no axe violations on the free-text screen', async () => {
-    installFetch(() => jsonResponse(FREETEXT_MATCH))
+  it('shows a message when the email is invalid', async () => {
+    installFetch(() => jsonResponse(MATCHED), {
+      callback: () =>
+        jsonResponse(
+          { error: { code: 'email_invalid', field: 'email' } },
+          { ok: false, status: 400 },
+        ),
+    })
     const user = userEvent.setup()
-    const { container } = render(<App />)
-    await gotoFreeText(user)
+    renderApp()
+    await gotoResult(user)
+    await user.click(continueBtn())
+    await user.type(screen.getByLabelText('Your name'), 'Sam')
+    await user.type(screen.getByLabelText('Your email address'), 'nope')
+    await user.click(screen.getByRole('button', { name: /request a callback/i }))
+    expect(await screen.findByText('Enter a valid email address.')).toBeInTheDocument()
+  })
+})
+
+describe('accessibility', () => {
+  it('has no axe violations on the topic step', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const { container } = renderApp()
+    await screen.findByRole('radio', { name: /costs and charges/i })
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('has no axe violations on the result step', async () => {
+    installFetch(() => jsonResponse(MATCHED))
+    const user = userEvent.setup()
+    const { container } = renderApp()
+    await gotoResult(user)
     expect(await axe(container)).toHaveNoViolations()
   })
 })
