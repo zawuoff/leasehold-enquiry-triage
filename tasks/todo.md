@@ -1,33 +1,37 @@
-# Todo — Chunk C: connect frontend to backend
+# Todo — Guided-scenario triage (tickets 4 + 5)
 
-Branch: `connecting-frontend-to-backend` · Plan: approved (scaffold, chunked).
-No commits by assistant.
+Branch: `connecting-frontend-to-backend`. No commits by assistant.
+Content source: docs/content.md (verbatim).
 
-- [x] Backend: `POST /api/triage` stub (csrf_exempt, POST-only) returning JSON
-- [x] Backend tests: POST 200 stub, GET 405, invalid JSON 400
-- [x] Frontend: Vite dev proxy `/api` → `http://localhost:8000`
-- [x] Frontend: relative-path fetch client (`src/api/triage.ts`)
-- [x] Frontend: wire Start button → call API, show result/error (aria-live)
-- [x] Frontend tests: api client (success/failure) + App click (success/error) + a11y
-- [x] Verify: backend 4 tests, frontend 6 tests, build clean, live proxy e2e
+## Backend (ticket 4)
+- [x] `content.py` — mirror content.md (TOPICS, WARNINGS, SCENARIOS)
+- [x] `domain.py` — `validate_guided`, `classify_guided` (dedup by topic)
+- [x] `views.py` — guided triage + `GET /api/scenarios`; `urls.py`
+- [x] backend tests (scenarios, 1/2 ids, dedup, all validation codes, 405) — 18 pass
+
+## Frontend (ticket 5)
+- [x] `src/content.ts` — mirror content.md static chrome (2 strings marked DRAFT)
+- [x] `src/api/triage.ts` — `getScenarios`, `postGuidedTriage`, typed 400
+- [x] `ScenarioPicker`, `TriageResults`, `ServiceError` + App step machine
+- [x] a11y (focus mgmt, error summary, aria) + frontend tests — 12 pass (incl. axe)
+
+## Verify
+- [x] backend tests + check; frontend tests + build; live e2e click-through
 - [ ] User commits + opens PR (assistant provides PR description only)
 
 ## Review
 
-- **What shipped:** the front/back boundary. Django gains a stub
-  `POST /api/triage` (`@csrf_exempt`, POST-only → 405 on GET, 400 on bad JSON,
-  200 stub otherwise). Vite proxies `/api` to Django in dev, so the browser makes
-  same-origin calls (no CORS). React calls it via a relative-URL fetch client and
-  the Start button now shows the backend message (or an error) in an `aria-live`
-  region.
-- **Verified:**
-  - Backend: `manage.py test triage` → 4 passed (no DB).
-  - Frontend: `npm test` → 6 passed (2 files); `npm run build` → clean.
-  - End-to-end via proxy (`:5173` → `:8000`): POST → 200 stub JSON, GET → 405,
-    invalid JSON → 400.
-- **Notes / deliberate cuts:** the triage response is a stub — real
-  classification (scenarios, keyword matching, topics) is later tickets. Proxy is
-  dev-only; a real deployment serves both from one origin.
-- **Gotcha logged:** a stale `runserver` on :8000 (health-only code) once served
-  requests and masked the new route — always confirm the intended process owns
-  the port. (→ tasks/lessons.md)
+- **What shipped:** the first real feature — guided-scenario triage, front to
+  back. Backend mirrors `content.md` into pure-Python data + logic
+  (`validate_guided`/`classify_guided`), exposed via `POST /api/triage` (guided)
+  and `GET /api/scenarios`. Results group/dedupe by topic with a shared warning.
+  Frontend renders the picker from the API (two-selection limit), submits, and
+  shows topic-grouped guidance cards, with validation + service-error handling,
+  focus management and an error summary.
+- **Verified:** backend `test triage` → 18 passed (no DB); frontend `npm test` →
+  12 passed (incl. axe on picker + results); `npm run build` → clean; live proxy
+  e2e — scenarios list, two-same-topic dedup, and 400 on empty selection.
+- **Notes / process:** two picker strings are `// DRAFT` (not in content.md yet);
+  logged in running-notes for confirmation → promotion. Card link labels reuse
+  approved topic-level labels. Free-text (ticket 6), Back/"this doesn't match"
+  recovery (ticket 7), callback + feedback remain out of scope.
